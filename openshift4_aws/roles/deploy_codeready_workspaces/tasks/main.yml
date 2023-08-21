@@ -2,31 +2,31 @@
 # tasks file for deploy_codeready_workspaces
 
 - name: template values for codeready operators group
-  copy:
+  ansible.builtin.copy:
     src: "{{ role_path }}/files/codeready_operatorgroup.yml"
     dest: "{{ openshift_build_path }}/codeready_operatorgroup.yml"
 
 - name: template values for codeready-workspaces operators
-  copy:
+  ansible.builtin.copy:
     src: "{{ role_path }}/files/codeready-workspaces-operator.yml"
     dest: "{{ openshift_build_path }}/codeready-workspaces-operator.yml"
 
 - name: Create codeready-workspaces namespace
-  k8s:
+  kubernetes.core.k8s:
     name: codeready-workspaces
     kind: Namespace
     api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
     state: present
 
 - name: install operatorgroup required for codeready-workspaces
-  k8s:
+  kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', '{{ openshift_build_path }}/codeready_operatorgroup.yml') }}"
     api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
     namespace: "codeready-workspaces"
 
 - name: install operators required for codeready-workspaces
-  k8s:
+  kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', '{{ openshift_build_path }}/codeready-workspaces-operator.yml') }}"
     api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
@@ -48,12 +48,12 @@
   delay: 30
 
 - name: template values for CheCluster
-  copy:
+  ansible.builtin.copy:
     src: "{{ role_path }}/files/CheCluster.yml"
     dest: "{{ openshift_build_path }}/CheCluster.yml"
 
 - name: install CheCluster
-  k8s:
+  kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', '{{ openshift_build_path }}/CheCluster.yml') }}"
     api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"

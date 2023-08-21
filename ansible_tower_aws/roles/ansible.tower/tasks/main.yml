@@ -2,7 +2,7 @@
 ###################################
 # Common Packages
 ###################################
-- include_tasks: nodes_setup.yml
+- ansible.builtin.include_tasks: nodes_setup.yml
 
 ###################################
 # Base setup of Tower

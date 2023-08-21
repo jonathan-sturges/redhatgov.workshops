@@ -2,7 +2,7 @@
 # tasks file for tektoncd
 
 - name: template values for OpenShift Pipelines operator
-  copy:
+  ansible.builtin.copy:
     src: "{{ role_path }}/files/openshift-pipelines-operator.yml"
     dest: "{{ openshift_build_path }}/openshift-pipelines-operator.yml"
 

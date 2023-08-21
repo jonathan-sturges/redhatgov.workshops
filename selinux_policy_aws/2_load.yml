@@ -6,7 +6,7 @@
   hosts: localhost
   gather_facts: no
   tasks:
-    - wait_for:
+    - ansible.builtin.wait_for:
         host: "{{ item }}"
         port: 22
         state: started
@@ -19,7 +19,7 @@
   remote_user: ec2-user
   hosts: rhel_nodes
   tasks:
-    - user:
+    - ansible.builtin.user:
         name:      "{{ system_user }}"
         password:  "{{ workshop_password |password_hash('sha512') }}"
         state:     present
@@ -70,7 +70,7 @@
   hosts: rhel_nodes
   tasks:
     - name: Install required packages
-      package:
+      ansible.builtin.package:
         name: "{{ item }}"
         state: latest
       loop:
@@ -78,19 +78,19 @@
       - git
 
     - name: Install a test SELinux log
-      copy:
+      ansible.builtin.copy:
         src: testaudit
         dest: /root/testaudit
         mode: 0600
         setype: _default
 
     - name: Remove unneeded file
-      file:
+      ansible.builtin.file:
         path: /usr/share/selinux/devel/include/services/container.if
         state: absent
 
     - name: stage real cert for tower
-      copy:
+      ansible.builtin.copy:
         dest: "~ec2-user/cert.pem"
         src: "{{ deploy_working_dir }}/{{ workshop_prefix }}.{{ domain_name }}_cert.pem"
         owner: "ec2-user"
@@ -98,7 +98,7 @@
         mode: "0644"
 
     - name: stage real key for tower
-      copy:
+      ansible.builtin.copy:
         dest: "~ec2-user/key.pem"
         src: "{{ deploy_working_dir }}/{{ workshop_prefix }}.{{ domain_name }}_key.pem"
         owner: "ec2-user"
@@ -106,7 +106,7 @@
         mode: "0644"
 
     - name: install real certificate to web console
-      copy:
+      ansible.builtin.copy:
         dest: "/etc/cockpit/ws-certs.d/acme.cert"
         content: "{{ lookup('file', deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_cert.pem') }}\n{{ lookup('file', deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_key.pem') }}"
         owner: "root"

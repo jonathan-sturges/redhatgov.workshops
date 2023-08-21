@@ -21,7 +21,7 @@
   hosts: localhost
   connection: local
   tasks:
-  - lineinfile:
+  - ansible.builtin.lineinfile:
       path: "/home/{{ local_user }}/.ssh/known_hosts"
       regex: "^{{ item }},"
       state: absent

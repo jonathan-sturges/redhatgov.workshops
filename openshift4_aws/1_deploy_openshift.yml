@@ -3,5 +3,5 @@
 
   tasks:
     - name: create cluster admin and user accounts
-      include_role:
+      ansible.builtin.include_role:
         name: deploy_openshift

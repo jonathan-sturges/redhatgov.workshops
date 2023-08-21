@@ -3,7 +3,7 @@
 # Cloud Access
 #---------------------------------------------------
 - name: Cloud Access | Enable repos
-  shell: yum-config-manager --enable "{{ item }}" --save
+  ansible.builtin.shell: yum-config-manager --enable "{{ item }}" --save
   when: cloud_access
   with_items:
   - rhui-REGION-rhel-server-extras

@@ -7,7 +7,7 @@
   tags:
     - wait
   tasks:
-    - wait_for:
+    - ansible.builtin.wait_for:
         host: "{{ item }}"
         port: 22
         state: started
@@ -58,7 +58,7 @@
   tasks:
 
     - name: Create directories for LE
-      file:
+      ansible.builtin.file:
         path: "/etc/letsencrypt/{{ item.path }}"
         state: directory
         mode: '{{ item.mode }}'
@@ -69,7 +69,7 @@
         label: "{{ item.path }}"
 
     - name: Copy files for LE
-      copy:
+      ansible.builtin.copy:
         src: "{{ item.src }}"
         dest: "/etc/letsencrypt/{{ item.path }}"
         mode: "{{ item.mode }}"
@@ -81,7 +81,7 @@
       notify: restart nginx
 
     - name: enable nginx module
-      ini_file:
+      community.general.ini_file:
         path: /etc/dnf/modules.d/nginx.module
         section: "{{ item.section }}"
         option: "{{ item.option }}"
@@ -94,7 +94,7 @@
         - { section: "nginx", option: "state", value: "enabled" }
 
     - name: enable php module
-      ini_file:
+      community.general.ini_file:
         path: /etc/dnf/modules.d/php.module
         section: "{{ item.section }}"
         option: "{{ item.option }}"
@@ -107,7 +107,7 @@
         - { section: "php", option: "state", value: "enabled" }
 
     - name: install LEMP stack
-      package:
+      ansible.builtin.package:
         name:
         - mariadb
         - mariadb-server
@@ -120,7 +120,7 @@
         state: latest
 
     - name: change php fam user and group
-      ini_file:
+      community.general.ini_file:
         path: /etc/php-fpm.d/www.conf
         section: "{{ item.section }}"
         option: "{{ item.option }}"
@@ -131,21 +131,21 @@
         - { section: "www", option: "group", value: "nginx" }
 
     - name: link nginx document root to nginx
-      file:
+      ansible.builtin.file:
         src: /usr/share/nginx/html
         dest: /var/www/html
         state: link
         force: yes
 
     - name: install nginx ssl conf
-      template:
+      ansible.builtin.template:
         src: nginx-ssl.conf.j2
         dest: /etc/nginx/conf.d/ssl.conf
         mode: "0644"
       notify: restart nginx
 
     - name: install test page
-      copy:
+      ansible.builtin.copy:
         src: info.php
         dest: /usr/share/nginx/html/info.php
 
@@ -159,7 +159,7 @@
         - php-fpm
 
     - name: open http and https firewalld ports
-      firewalld:
+      ansible.posix.firewalld:
         service: "{{ item }}"
         state: enabled
         immediate: yes
@@ -233,7 +233,7 @@
     - rhel_nodes
   gather_facts: no
   tasks:
-    - uri:
+    - ansible.builtin.uri:
         url: "https://{{ inventory_hostname }}:9090/system"
         url_username: "{{ system_user }}"
         url_password: "{{ workshop_password }}"

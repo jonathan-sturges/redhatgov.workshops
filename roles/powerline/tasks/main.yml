@@ -2,7 +2,7 @@
 # tasks file for powerline
 
 - name: Install pip and vim
-  yum:
+  ansible.builtin.yum:
     name: "{{ packages }}"
     state: latest
   vars:
@@ -20,7 +20,7 @@
 
 - name: Create font storage directory
   become: no
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
   with_items:
@@ -29,7 +29,7 @@
 
 - name: Download powerline fonts
   become: no
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ item.src }}"
     dest: "{{ item.dest }}"
     mode: 0644
@@ -39,18 +39,18 @@
 
 - name: Regenerate font cache
   become: no
-  shell: "fc-cache -vf ~{{ system_user }}/.local/share/fonts/"
+  ansible.builtin.shell: "fc-cache -vf ~{{ system_user }}/.local/share/fonts/"
 
 - name: Install bashrc
   become: no
-  template:
+  ansible.builtin.template:
     src: "bashrc.j2"
     dest: "~{{ system_user }}/.bashrc"
     mode: 0644
 
 - name: Configure vim for powerline
   become: no
-  copy:
+  ansible.builtin.copy:
     src: "vimrc"
     dest: "~{{ system_user }}/.vimrc"
     mode: 0644

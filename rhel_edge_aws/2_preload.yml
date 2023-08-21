@@ -5,7 +5,7 @@
   hosts: localhost
   gather_facts: no
   tasks:
-    - wait_for:
+    - ansible.builtin.wait_for:
         host: "{{ item }}"
         port: 22
         state: started
@@ -42,14 +42,14 @@
     when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
 
   - name: add codeready-builder rhui repo
-    command: "dnf config-manager --set-enabled {{ item }}"
+    ansible.builtin.command: "dnf config-manager --set-enabled {{ item }}"
     loop:
       - codeready-builder-for-rhel-8-rhui-rpms
       - rhel-8-appstream-rhui-rpms
     when: cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
 
   - name: install required development tools
-    dnf:
+    ansible.builtin.dnf:
       name:
         - "@development"
         - "git"
@@ -70,7 +70,7 @@
       fstype: ext4
 
   - name: create mountpoint
-    file:
+    ansible.builtin.file:
       path: /build
       state: directory
       mode: '0755'
@@ -83,7 +83,7 @@
       fstype: ext4
 
   - name: stage rhel 8.3 boot ISO
-    get_url:
+    ansible.builtin.get_url:
       url: https://archive.org/download/rhel-8.3-x86_64-resources/rhel-8.3-x86_64-boot.iso
       dest: /build
 
@@ -98,7 +98,7 @@
 #      mode: get
 
   - name: create build dirs
-    file:
+    ansible.builtin.file:
       path: "{{ item }}"
       state: directory
       mode: '0755'
@@ -109,49 +109,49 @@
     become: yes
 
   - name: create rpmbuild symlink
-    file:
+    ansible.builtin.file:
       path: "~ec2-user/rpmbuild"
       src: "/build/rpmbuild"
       state: "link"
     become: no
 
   - name: pull rpm spec file
-    git:
+    ansible.builtin.git:
       repo: https://github.com/ajacocks/qemu.git
       dest: "/build/src/qemu"
       force: yes
     become: no
 
   - name: create rpmbuild tree
-    command: rpmdev-setuptree
+    ansible.builtin.command: rpmdev-setuptree
     become: no
 
   - name: pull dependencies for build
-    command: dnf builddep /build/src/qemu/qemu-full.spec -y
+    ansible.builtin.command: dnf builddep /build/src/qemu/qemu-full.spec -y
     async: 10800
     poll: 0
     register: package_dep_status
 
   - name: 'Check on package dependencies ...'
-    async_status: jid={{ package_dep_status.ansible_job_id }}
+    ansible.builtin.async_status: jid={{ package_dep_status.ansible_job_id }}
     register: job_result
     until: job_result.finished
     delay: 30
     retries: 180
 
   - name: pull sources for build
-    command: spectool -g -R /build/src/qemu/qemu-full.spec
+    ansible.builtin.command: spectool -g -R /build/src/qemu/qemu-full.spec
     become: no
 
   - name: execute build
-    shell: rpmbuild -bb /build/src/qemu/qemu-full.spec > ~ec2-user/rpmbuild.log 2>&1
+    ansible.builtin.shell: rpmbuild -bb /build/src/qemu/qemu-full.spec > ~ec2-user/rpmbuild.log 2>&1
     async: 10800
     poll: 0
     register: package_build_status
     become: no
 
   - name: 'Check on package build ...'
-    async_status: jid={{ package_build_status.ansible_job_id }}
+    ansible.builtin.async_status: jid={{ package_build_status.ansible_job_id }}
     register: job_result
     until: job_result.finished
     delay: 30
@@ -159,7 +159,7 @@
     become: no
       
   - name: explain how to login
-    debug:
+    ansible.builtin.debug:
       msg: "Please run './admin.sh' to login to the admin server. Then, you may proceed to install the other nodes with 'cd src/rhel_edge_aws && ansible-playbook 3_load.yml'."
 
 ...

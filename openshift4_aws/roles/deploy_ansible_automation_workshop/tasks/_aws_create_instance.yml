@@ -3,7 +3,7 @@
 #  Provisioning
 #===============================================================================
 - name: Debug for Student Provisioning Loop
-  debug:
+  ansible.builtin.debug:
     msg: "###Provisioning edge.{{ user_id }}"
 
 #===============================================================================
@@ -18,13 +18,13 @@
       instance-state-name: [ "starting", "running" ]
   register: query_public_dns_name
 
-- debug:
+- ansible.builtin.debug:
     var: query_public_dns_name
 
-- debug:
+- ansible.builtin.debug:
     msg: "{{ query_public_dns_name.instances }}"
 
-- debug:
+- ansible.builtin.debug:
     msg: "{{ query_public_dns_name.instances }} | length"
 
 - name: Create RHEL instances
@@ -53,7 +53,7 @@
   register: ec2_rhel
   when: query_public_dns_name.instances | length == 0
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_rhel
 
 - name: Get ec2 instance info
@@ -65,29 +65,29 @@
   register: ec2_details
 
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_details
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_details.instances
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_details.instances.0.public_dns_name
 
 - name: add RHEL hosts to groups
-  add_host:
+  ansible.builtin.add_host:
     name: "{{ openshift_cluster_name }}.edge.{{ user_id }}-{{ ec2_details.instances.0.public_dns_name }}"
     ansible_ssh_host: "{{ ec2_details.instances.0.public_ip_address }}"
     groups: rhel_nodes
 
 - name: create inventory list (node hosts)
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ deploy_working_dir }}/hostlist"
     line: "{{ ec2_details.instances.0.public_ip_address }} {{ openshift_cluster_name }}.edge.{{ user_id }}.{{ openshift_cluster_base_domain }} node.{{ user_id }}"
     regexp: ".*{{ openshift_cluster_name }}.edge.{{ user_id }}.{{ openshift_cluster_base_domain }}.*"
 
 - name: Add node hosts to inventory
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ inventory_working_dir }}/hosts"
     insertafter: '^\[rhel_nodes\]$'
     regexp: "^{{ openshift_cluster_name }}.edge.{{ user_id }}.{{ openshift_cluster_base_domain }}"
@@ -97,7 +97,7 @@
 #  DNS
 #---------------------------------------------------
 - name: Create DNS records for RHEL
-  route53:
+  amazon.aws.route53:
     zone: "{{ openshift_cluster_base_domain }}"
     type: "CNAME"
     ttl: "300"
@@ -108,5 +108,5 @@
   register: dns_output
 
 - name: Debug DNS Output
-  debug:
+  ansible.builtin.debug:
     var: dns_output

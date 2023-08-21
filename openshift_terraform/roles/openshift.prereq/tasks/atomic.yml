@@ -4,10 +4,10 @@
 # [TODO]: Add Atomic Host support.
 
 - name: Upgrade the atomic host platform to the latest version (atomic host upgrade)
-  shell: atomic host upgrade
+  ansible.builtin.shell: atomic host upgrade
 
 - name: Reboot the host
-  shell: sleep 2 && shutdown -r now "Ansible updates triggered"
+  ansible.builtin.shell: sleep 2 && shutdown -r now "Ansible updates triggered"
   async: 1
   poll: 0
   become: true
@@ -20,7 +20,7 @@
 - name: get EC2 Facts
   action: ec2_metadata_facts
 
-- debug: var=hostvars
+- ansible.builtin.debug: var=hostvars
 
 - name: Template inventory file to host
-  template: dest={{ default_home }}/inventory_ose  src=inventory_ose.j2
+  ansible.builtin.template: dest={{ default_home }}/inventory_ose  src=inventory_ose.j2

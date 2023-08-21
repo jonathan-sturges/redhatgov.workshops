@@ -1,6 +1,6 @@
 ---
 - name: Install Java 1.8 and some basic dependencies
-  yum: 
+  ansible.builtin.yum: 
     name: "{{ item }}"
     state: present
   with_items:
@@ -11,14 +11,14 @@
    - httpd
 
 - name: Ensure Apache is always running
-  service:
+  ansible.builtin.service:
     name: httpd
     state: started
     enabled: yes
 
 - name: Copy JMT - Offline Version archive
   become: yes
-  copy:
+  ansible.builtin.copy:
     dest: "/tmp/"
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
@@ -26,7 +26,7 @@
     src: "migrationtoolkit-rhamt-cli-4.0.0.Beta2.1-offline.zip" 
 
 - name: Extract JMT - Offline Version archive
-  unarchive: 
+  ansible.builtin.unarchive: 
     remote_src: true
     dest: /home/{{ system_user }}
     src: /tmp/migrationtoolkit-rhamt-cli-4.0.0.Beta2.1-offline.zip
@@ -34,7 +34,7 @@
 
 - name: Copy JMT Console archive
   become: yes
-  copy:
+  ansible.builtin.copy:
     dest: "/tmp/"
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
@@ -42,7 +42,7 @@
     src: "migrationtoolkit-rhamt-web-distribution-4.0.0.Beta2.1-with-authentication.zip" 
 
 - name: Extract JMT Console archive
-  unarchive: 
+  ansible.builtin.unarchive: 
     remote_src: true
     dest: /home/{{ system_user }}
     src: /tmp/migrationtoolkit-rhamt-web-distribution-4.0.0.Beta2.1-with-authentication.zip
@@ -50,7 +50,7 @@
 
 - name: Copy Simple Sample App 
   become: yes
-  copy:
+  ansible.builtin.copy:
     dest: "/tmp/"
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
@@ -59,7 +59,7 @@
 
 - name: Copy JEE Example App EAR
   become: yes
-  copy:
+  ansible.builtin.copy:
     dest: "/tmp/"
     group: "{{ system_user }}"
     owner: "{{ system_user }}"

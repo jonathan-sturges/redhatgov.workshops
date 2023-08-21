@@ -3,7 +3,7 @@
 - name: Install cockpit
   block:
   - name: Ensure cockpit packages exist
-    package:
+    ansible.builtin.package:
       name: "{{ item }}"
       state: latest
     with_items:
@@ -18,7 +18,7 @@
     - wget
 
   - name: Ensure cockpit is started
-    service:
+    ansible.builtin.service:
       name: cockpit.socket
       state: started
       enabled: yes

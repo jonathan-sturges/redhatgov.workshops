@@ -1,19 +1,19 @@
 ---
 # tasks file for cockpit
 - name: gather facts
-  gather_facts:
+  ansible.builtin.gather_facts:
 
 - name: Gather package facts
-  package_facts:
+  ansible.builtin.package_facts:
     manager: auto
 
 - name: Gather service facts
-  service_facts:
+  ansible.builtin.service_facts:
 
 - name: Install cockpit
   block:
   - name: Ensure cockpit packages exist
-    package:
+    ansible.builtin.package:
       name: "{{ item }}"
       state: latest
     with_items:
@@ -25,7 +25,7 @@
     - subscription-manager-cockpit
 
   - name: Add extra packages when on RHEL 8 (with podman)
-    package:
+    ansible.builtin.package:
       name: "{{ item }}"
       state: latest
     with_items:
@@ -38,7 +38,7 @@
     when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8' and podman_install == true
 
   - name: Add extra packages when on RHEL 8 (without podman)
-    package:
+    ansible.builtin.package:
       name: "{{ item }}"
       state: latest
     with_items:
@@ -69,7 +69,7 @@
   block:
 
   - name: open cockpit port in iptables
-    iptables:
+    ansible.builtin.iptables:
       chain: INPUT
       protocol: tcp
       destination_port: 9090

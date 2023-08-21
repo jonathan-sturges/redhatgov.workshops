@@ -3,7 +3,7 @@
 
 - name: Copy container_check.stp
   become: yes
-  copy:
+  ansible.builtin.copy:
     src: container_check.stp
     dest: /home/{{ system_user }}/workshopfiles/container_check.stp 
     group: "{{ system_user }}"

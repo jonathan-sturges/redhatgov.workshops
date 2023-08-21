@@ -4,7 +4,7 @@
 
 - name: Install base packages
   become: yes
-  yum: name={{ item }} state=latest enablerepo=epel-testing
+  ansible.builtin.yum: name={{ item }} state=latest enablerepo=epel-testing
   with_items: 
       - vim
       - git
@@ -13,17 +13,17 @@
   when: install
 
 - name: Fake, if missing, the dbus-1 directory
-  file:
+  ansible.builtin.file:
     path: /usr/lib64/dbus-1
     state: directory
 
 - name: Fake, if missing, the dbus dbus-daemon-launch-helper file
-  file:
+  ansible.builtin.file:
     path: /usr/lib64/dbus-1/dbus-daemon-launch-helper
     state: touch
 
 - name: Install ansible.cfg and vimrc in home directory
-  copy:
+  ansible.builtin.copy:
     src="{{ item.src }}"
     dest="/home/{{ system_user }}/{{ item.dest }}"
     owner="{{ system_user }}"
@@ -34,7 +34,7 @@
   when: install
 
 - name: Copy over SSH Key to {{ system_user }} home
-  copy: 
+  ansible.builtin.copy: 
     src: "{{ terraform_working_dir }}/{{ workshop_prefix }}-tower" 
     dest: "/home/{{ system_user }}/.ssh/{{ workshop_prefix }}-tower" 
     mode: 0400 
@@ -43,7 +43,7 @@
   when: install
 
 - name: Template over ansible.cfg
-  template:
+  ansible.builtin.template:
     dest="/home/{{ system_user }}/ansible.cfg"
     src=ansible.cfg.j2  
     owner="{{ system_user }}"

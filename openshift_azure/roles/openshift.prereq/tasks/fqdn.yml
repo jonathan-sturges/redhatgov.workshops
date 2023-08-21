@@ -2,7 +2,7 @@
 ---
 
 - name: Update system hostname
-  replace:
+  ansible.builtin.replace:
     dest: /etc/hostname
     regexp: '.*'
     replace: '{{ inventory_hostname }}'
@@ -10,17 +10,17 @@
   register: hostname_replace
 
 - name: Set hosts FQDN
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/hosts
     regexp: '^127\.0\.0\.1'
     line: '127.0.0.1   {{ inventory_hostname }} localhost localhost.localdomain localhost4 localhost4.localdomain4'
 
 - name: Set system hostname
-  hostname:
+  ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
 
 - name: Read system hostname
-  shell: hostname -F /etc/hostname
+  ansible.builtin.shell: hostname -F /etc/hostname
   changed_when: False
 
 # [TODO]: Replace EC2 facts with ansible IPv4.
@@ -30,14 +30,14 @@
   register: ec2_facts
 
 - name: Append EC2 host public ipv4 to hosts file
-  shell: "echo -e '{{ ec2_facts.ansible_facts.ansible_ec2_public_ipv4 }} {{ inventory_hostname }}' | tee --append /etc/hosts > /dev/null"
+  ansible.builtin.shell: "echo -e '{{ ec2_facts.ansible_facts.ansible_ec2_public_ipv4 }} {{ inventory_hostname }}' | tee --append /etc/hosts > /dev/null"
 
 - name: Append entry to hosts file
-  lineinfile: "dest=/etc/hosts state=present insertafter=EOF line={{ item }}"
+  ansible.builtin.lineinfile: "dest=/etc/hosts state=present insertafter=EOF line={{ item }}"
   with_items: "{{ etc_hosts }}"
 
 - name: Reboot the host
-  shell: sleep 2 && shutdown -r now "Ansible updates triggered"
+  ansible.builtin.shell: sleep 2 && shutdown -r now "Ansible updates triggered"
   async: 1
   poll: 0
   become: True
@@ -50,5 +50,5 @@
 #   when: hostname_replace.changed
 
 - name: Wait for nodes to come back 
-  pause: 
+  ansible.builtin.pause: 
     minutes: 2

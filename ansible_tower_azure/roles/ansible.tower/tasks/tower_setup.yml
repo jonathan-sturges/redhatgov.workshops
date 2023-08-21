@@ -4,28 +4,28 @@
 #--------------------------------------------------
 - name: Download Latest Tower packge
   become: yes
-  get_url: url=http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz dest=/tmp/ansible-tower-setup-latest.tar.gz   validate_certs=false 
+  ansible.builtin.get_url: url=http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz dest=/tmp/ansible-tower-setup-latest.tar.gz   validate_certs=false 
 
 - name: Unarchive Tower Package
   become: yes
-  unarchive: dest=/tmp/ src=/tmp/ansible-tower-setup-latest.tar.gz 
+  ansible.builtin.unarchive: dest=/tmp/ src=/tmp/ansible-tower-setup-latest.tar.gz 
 
 - name: Remove download ansible-tower-setup-latest.tar.gz
   become: yes
-  command: rm ansible-tower-setup-latest.tar.gz chdir=/tmp/
+  ansible.builtin.command: rm ansible-tower-setup-latest.tar.gz chdir=/tmp/
 
 - name: Rename dir
   become: yes
-  shell: mv ansible-tower-setup-* ansible-tower-setup chdir=/tmp/    
+  ansible.builtin.shell: mv ansible-tower-setup-* ansible-tower-setup chdir=/tmp/    
 
 - name: Template over Ansible Inventory to setup
   become: yes
-  template: dest=/tmp/ansible-tower-setup/inventory  src=inventory.j2
+  ansible.builtin.template: dest=/tmp/ansible-tower-setup/inventory  src=inventory.j2
 
 - name: Install Tower
   become: yes
   become_user: root
-  command: ./setup.sh chdir=/tmp/ansible-tower-setup  
+  ansible.builtin.command: ./setup.sh chdir=/tmp/ansible-tower-setup  
 
 #--------------------------------------------------
 # Install tower-cli
@@ -33,12 +33,12 @@
 - name: Install pip
   become: yes
   become_user: root
-  yum: name=python-pip  state=present
+  ansible.builtin.yum: name=python-pip  state=present
 
 - name: Install tower-cli
   become: yes
   become_user: root
-  pip: name=ansible-tower-cli state=present
+  ansible.builtin.pip: name=ansible-tower-cli state=present
 
 #--------------------------------------------------
 # Add License
@@ -46,5 +46,5 @@
 - name: Add Ansible Tower License
   become: yes
   become_user: root
-  copy: src=license dest=/etc/tower/license
+  ansible.builtin.copy: src=license dest=/etc/tower/license
 

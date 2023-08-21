@@ -13,42 +13,42 @@
 
   tasks:
     - name: create cluster admin and user accounts
-      include_role:
+      ansible.builtin.include_role:
         name: create_openshift_users
       when: create_openshift_users == true and openshift_installer_type != "automation"
     - name: deploy web terminal
-      include_role:
+      ansible.builtin.include_role:
         name: deploy_web_terminal
       when: deploy_web_terminal == true
     - name: deploy ansible automation
-      include_role:
+      ansible.builtin.include_role:
         name: deploy_ansible_automation
       when: deploy_ansible_automation == true
     - name: deploy codeready workspaces
-      include_role:
+      ansible.builtin.include_role:
         name: deploy_codeready_workspaces
       when: deploy_codeready_workspaces == true
     - name: deploy pipelines - tektoncd
-      include_role:
+      ansible.builtin.include_role:
         name: deploy_pipelines
       when: deploy_pipelines == true
     - name: deploy ansible automation workshop
-      include_role:
+      ansible.builtin.include_role:
         name: deploy_ansible_automation_workshop
       when: deploy_ansible_automation_workshop == true
     - name: deploy openshift service mesh
-      include_role:
+      ansible.builtin.include_role:
         name: deploy_service_mesh
       when: deploy_service_mesh == true
     - name: deploy signed certs
-      include_role:
+      ansible.builtin.include_role:
         name: deploy_signed_certs
       when: deploy_signed_certs == true
     - name: deploy serverless
-      include_role:
+      ansible.builtin.include_role:
         name: deploy_serverless
       when: deploy_serverless == true
     - name: deploy and configure openshift workshop resources
-      include_role:
+      ansible.builtin.include_role:
         name: deploy_service_mesh_workshop
       when: deploy_service_mesh_workshop == true
