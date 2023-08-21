@@ -2,7 +2,7 @@
 ---
 
 - name: Create users for shell/OC client access
-  user:
+  ansible.builtin.user:
     name:      "user{{ item }}"
     password:  "{{ workshop_password |password_hash('sha512') }}"
     state:     present

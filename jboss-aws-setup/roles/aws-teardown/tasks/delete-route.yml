@@ -1,6 +1,6 @@
 ---
 - name: Get Route Info
-  route53:
+  amazon.aws.route53:
     command: get
     zone: "{{ zone }}"
     record: "{{ record }}"
@@ -9,11 +9,11 @@
   register: rec
   ignore_errors: yes
 
-- debug:
+- ansible.builtin.debug:
     msg: "{{ rec }}"
 
 - name: Delete Route record
-  route53:
+  amazon.aws.route53:
     command: delete
     zone: "{{ zone }}"
     record: "{{ rec.set.record }}"

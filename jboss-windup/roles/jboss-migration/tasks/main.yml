@@ -1,6 +1,6 @@
 ---
 - name: Install Java 1.7 and some basic dependencies
-  yum: 
+  ansible.builtin.yum: 
     name: "{{ item }}"
     state: present
   with_items:
@@ -11,7 +11,7 @@
 
 - name: Copy Windup archive
   become: yes
-  copy:
+  ansible.builtin.copy:
     dest: "/tmp/"
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
@@ -19,7 +19,7 @@
     src: "jboss-migrationtoolkit-windup-2.7.0.GA.zip" 
 
 - name: Extract Windup archive
-  unarchive: 
+  ansible.builtin.unarchive: 
     remote_src: true
     dest: /home/{{ system_user }}
     src: /tmp/jboss-migrationtoolkit-windup-2.7.0.GA.zip
@@ -27,7 +27,7 @@
 
 - name: Copy JMT Console archive
   become: yes
-  copy:
+  ansible.builtin.copy:
     dest: "/home/{{ system_user }}/lab2/"
     group: "{{ system_user }}"
     owner: "{{ system_user }}"

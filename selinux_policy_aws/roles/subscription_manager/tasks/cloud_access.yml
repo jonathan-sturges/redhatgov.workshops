@@ -7,7 +7,7 @@
 
   # RHEL 7 Version
   - name: Cloud Access | Enable repos
-    shell: yum-config-manager --enable "{{ item }}" --save
+    ansible.builtin.shell: yum-config-manager --enable "{{ item }}" --save
     when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '7'
     with_items:
     - rhui-REGION-rhel-server-extras

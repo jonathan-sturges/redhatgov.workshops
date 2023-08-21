@@ -5,7 +5,7 @@
 # deliver configuration to admin server
 #---------------------------------------------------
 - name: install required packages
-  package:
+  ansible.builtin.package:
     name:
     - bash-completion
     - mosh
@@ -15,25 +15,25 @@
     state: present
 
 - name: install required Python packages
-  pip:
+  ansible.builtin.pip:
     name:
     - ansible
     - boto
     - boto3
 
 - name: set system python version
-  alternatives:
+  community.general.alternatives:
     name: python
     path: /usr/bin/python3
 
 - name: create src directory
-  file:
+  ansible.builtin.file:
     path: "/home/{{ system_user }}/src/"
     state: directory
   become: no
 
 - name: sync content to admin host
-  synchronize:
+  ansible.posix.synchronize:
     src: "{{ item }}"
     dest: "/home/{{ system_user }}/src/"
     rsync_opts:
@@ -47,7 +47,7 @@
   become: no
 
 - name: set permissions on sync'ed files
-  file:
+  ansible.builtin.file:
     path: "/home/{{ system_user }}/src"
     owner: "{{ system_user }}"
     group: "{{ system_user }}"
@@ -55,7 +55,7 @@
     recurse: yes
 
 - name: template files
-  template:
+  ansible.builtin.template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
     mode: "{{ item.mode }}"
@@ -65,7 +65,7 @@
   become: no
 
 - name: copy credentials to admin host
-  copy:
+  ansible.builtin.copy:
     src: "{{ deploy_working_dir }}/aws_credentials_vault.yml"
     dest: "/home/{{ system_user }}/src/{{ playbook_dir | regex_replace('^.*\/','') }}/aws_credentials_vault.yml"
     mode: '0644'
@@ -73,7 +73,7 @@
   become: no
 
 - name: copy group_vars/all.yml to remote host
-  copy:
+  ansible.builtin.copy:
     src: "{{ deploy_working_dir }}/all.yml"
     dest: "/home/{{ system_user }}/src/{{ playbook_dir | regex_replace('^.*\/','') }}/group_vars/all.yml"
     mode: '0644'
@@ -85,7 +85,7 @@
 #    block: "{{ lookup('file', deploy_working_dir + '/hostlist') }}"
 
 - name: install ssh key
-  copy:
+  ansible.builtin.copy:
     src: "{{ ssh_key_path }}"
     dest: "~/.ssh/id_rsa"
     mode: 0400

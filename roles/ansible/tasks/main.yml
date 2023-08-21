@@ -5,11 +5,11 @@
   block:
 
     - name: Install PIP
-      yum:
+      ansible.builtin.yum:
         name: python2-pip
 
     - name: Install Ansible
-      pip:
+      ansible.builtin.pip:
         name: ansible
 
   when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '7'
@@ -18,21 +18,21 @@
   block:
 
     - name: Determine newest Ansible repo
-      shell: "subscription-manager repos --list | egrep '^Repo Name:' | egrep 'Ansible Engine.*\\(RPMs\\)' | sort -V -k 5 | cut -d\\  -f 3- | tail -1"
+      ansible.builtin.shell: "subscription-manager repos --list | egrep '^Repo Name:' | egrep 'Ansible Engine.*\\(RPMs\\)' | sort -V -k 5 | cut -d\\  -f 3- | tail -1"
       register: result
 
-    - set_fact:
+    - ansible.builtin.set_fact:
         version: "{{ result.stdout }}"
 
-    - debug:
+    - ansible.builtin.debug:
         var: version
 
     - name: Install PIP
-      yum:
+      ansible.builtin.yum:
         name: python3-pip
 
     - name: Install Ansible
-      pip:
+      ansible.builtin.pip:
         name: ansible
 
   when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'

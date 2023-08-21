@@ -3,7 +3,7 @@
 
 - name: Install Atomic commmand
   become: yes
-  yum: 
+  ansible.builtin.yum: 
     name: "{{ item }}"
     state: present
   with_items:
@@ -12,7 +12,7 @@
     - atomic
 
 - name: Setup workshop directories
-  file:
+  ansible.builtin.file:
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
     mode:  0700
@@ -20,7 +20,7 @@
     state: directory 
 
 - name: Copy Scanner Files to Hosts. 
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: /home/{{ system_user }}/workshopfiles
     owner: "{{ system_user }}"
@@ -33,7 +33,7 @@
     - list_rpms.py
 
 - name: Setup Dockerfile directories
-  file:
+  ansible.builtin.file:
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
     mode:  0700
@@ -44,7 +44,7 @@
     - fedora
 
 - name: Seccom alpine Dockerfile
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: /home/{{ system_user }}/workshopfiles/alpine
     owner: "{{ system_user }}"
@@ -54,7 +54,7 @@
     - alpine/Dockerfile
 
 - name: Seccom alpine Dockerfile
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: /home/{{ system_user }}/workshopfiles/fedora
     owner: "{{ system_user }}"
@@ -64,7 +64,7 @@
     - fedora/Dockerfile
 
 - name: Seccom Files
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: /home/{{ system_user }}/workshopfiles
     owner: "{{ system_user }}"
@@ -75,13 +75,13 @@
 
 
 - name: Build alpine image
-  docker_image:
+  community.docker.docker_image:
     path: /home/{{ system_user }}/workshopfiles/alpine
     name: redhatgov/alpine
     state: present
 
 - name: Build fedora image
-  docker_image:
+  community.docker.docker_image:
     path: /home/{{ system_user }}/workshopfiles/fedora
     name: redhatgov/fedora
     state: present

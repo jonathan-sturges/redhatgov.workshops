@@ -9,7 +9,7 @@
   register: ec2_vpc
 
 - name: debug vpc object
-  debug:
+  ansible.builtin.debug:
     msg: "{{ ec2_vpc }}"
 
 - amazon.aws.ec2_vpc_subnet_info:
@@ -19,7 +19,7 @@
   register: ec2_subnet
 
 - name: debug subnets object
-  debug:
+  ansible.builtin.debug:
     msg: "{{ ec2_subnet }}"
 
 - name: Get rhel instance info
@@ -31,7 +31,7 @@
   register: ec2_rhel
 
 - name: debug rhel instance hosts
-  debug:
+  ansible.builtin.debug:
     msg: "{{ ec2_rhel }}"
 
 #===============================================================================
@@ -39,21 +39,21 @@
 #===============================================================================
 
 - name: set RHEL AMI to use
-  set_fact:
+  ansible.builtin.set_fact:
     rhel_ami: "{{ regions[region][rhel_ver].ami }}"
   when: not beta|bool
 
 - name: set RHEL AMI to use (beta)
-  set_fact:
+  ansible.builtin.set_fact:
     rhel_ami: "{{ regions[region][rhel_ver].beta.ami }}"
   when: beta|bool
 
 - name: RHEL AMI
-  debug:
+  ansible.builtin.debug:
     msg: "Using AWS {{ region }} {{ rhel_ver }} AMI: {{ rhel_ami }}"
 
 - name: Delete DNS records for RHEL
-  route53:
+  amazon.aws.route53:
     zone: "{{ openshift_cluster_base_domain }}"
     type: "CNAME"
     ttl: "300"
@@ -78,7 +78,7 @@
     loop_var: ec2
   register: ec2_rhel
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_rhel
 
 - name: Delete RHEL security group
@@ -90,11 +90,11 @@
     state: "{{ aws_state }}"
   register: result
 
-- debug:
+- ansible.builtin.debug:
     var: result
 
 - name: Delete VPC internet gateway
-  ec2_vpc_igw:
+  amazon.aws.ec2_vpc_igw:
     region: "{{ region }}"
     vpc_id: "{{ ec2_vpc.vpcs.0.id }}"
     state: "{{ aws_state }}"
@@ -105,11 +105,11 @@
       workshop_prefix: "{{ workshop_prefix }}"
   register: ec2_igw
 
-- debug:
+- ansible.builtin.debug:
     var: result
 
 - name: Delete VPC route table
-  ec2_vpc_route_table:
+  amazon.aws.ec2_vpc_route_table:
     region: "{{ region }}"
     vpc_id: "{{ ec2_vpc.vpcs.0.id }}"
     subnets: "{{ ec2_subnet.subnets }}"
@@ -119,11 +119,11 @@
     state: "{{ aws_state }}"
   register: ec2_route
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_route
 
 - name: Delete public subnet
-  ec2_vpc_subnet:
+  amazon.aws.ec2_vpc_subnet:
     cidr: "10.0.2.0/24"
     region: "{{ region }}"
     vpc_id: "{{ ec2_vpc.vpcs.0.id }}"
@@ -137,11 +137,11 @@
   register: ec2_subnet
   ignore_errors: yes
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_subnet
 
 - name: Delete VPC
-  ec2_vpc_net:
+  amazon.aws.ec2_vpc_net:
     name: "{{ openshift_cluster_name }}-{{ workshop_prefix }}-vpc"
     region: "{{ region }}"
     cidr_block: "10.0.0.0/16"
@@ -149,7 +149,7 @@
   register: temp_ec2_vpc
 
 - name: Delete EC2 keypair
-  ec2_key:
+  amazon.aws.ec2_key:
     name: "{{ openshift_cluster_name }}-{{ workshop_prefix }}-key"
     region: "{{ region }}"
     state: "{{ aws_state }}"

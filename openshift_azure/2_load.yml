@@ -3,7 +3,7 @@
 - name: Wait for bastion Azure VM to become initialized
   hosts: localhost
   tasks:
-    - wait_for:
+    - ansible.builtin.wait_for:
         host: "{{ item }}"
         port: 22
         state: started
@@ -14,7 +14,7 @@
 - name: Wait for master Azure VM(s) to become initialized
   hosts: localhost
   tasks:
-    - wait_for:
+    - ansible.builtin.wait_for:
         host: "{{ item }}"
         port: 2200
         state: started

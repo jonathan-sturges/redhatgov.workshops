@@ -17,7 +17,7 @@
 #    register: results
 
   - name: Unsubscribe RHN
-    redhat_subscription:
+    community.general.redhat_subscription:
       state: absent
     when: not cloud_access
 #    when: not cloud_access and not results.failed

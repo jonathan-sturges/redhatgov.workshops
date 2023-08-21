@@ -7,7 +7,7 @@
   tags:
     - wait
   tasks:
-    - wait_for:
+    - ansible.builtin.wait_for:
         host: "{{ item }}"
         port: 22
         state: started
@@ -53,21 +53,21 @@
     - role: system-user
   tasks:
     - name: install container management tools
-      yum:
+      ansible.builtin.yum:
         name:
         - buildah
         - podman
         - skopeo
         state: present
     - name: install session recording tools
-      yum:
+      ansible.builtin.yum:
         name:
         - tlog
         - cockpit-session-recording
         - systemd-journal-remote
         state: present
     - name: install bash-completion (RHEL 8)
-      yum:
+      ansible.builtin.yum:
         name:
         - bash-completion
         state: present
@@ -128,22 +128,22 @@
     - custom
   tasks:
     - name: search for httpd versions
-      yum:
+      ansible.builtin.yum:
         list: httpd
       register: result
 
-    - set_fact:
+    - ansible.builtin.set_fact:
         httpd_packages: "{{ httpd_packages|default([]) }} + [ '{{ item.name + '-' + item.version + '-' + item.release + '.' + item.arch }}']"
       with_items:
       - "{{ result.results }}"
 
     - name: install oldest available version of httpd
-      yum:
+      ansible.builtin.yum:
         name: "{{ httpd_packages | sort_versions | first }}"
         state: present
 
     - name: create ssh key for ec2-user
-      openssh_keypair:
+      community.crypto.openssh_keypair:
         path: /home/ec2-user/.ssh/id_rsa
         owner: ec2-user
         group: ec2-user
@@ -152,18 +152,18 @@
       register: sshkey
 
     - name: add key to authorized_key
-      authorized_key:
+      ansible.posix.authorized_key:
         user: ec2-user
         key: "{{ sshkey.public_key }}"
         state: present
 
     - name: Add host key to known_hosts
-      shell: ssh-keyscan -t ecdsa localhost > /home/ec2-user/.ssh/known_hosts
+      ansible.builtin.shell: ssh-keyscan -t ecdsa localhost > /home/ec2-user/.ssh/known_hosts
       args:
         creates: /home/ec2-user/.ssh/known_hosts
 
     - name: install real certificate to web console
-      copy:
+      ansible.builtin.copy:
         dest: "/etc/cockpit/ws-certs.d/acme.cert"
         content: "{{ lookup('file', deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_cert.pem') }}\n{{ lookup('file', deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_key.pem') }}"
         owner: "root"
@@ -184,7 +184,7 @@
     - custom
   tasks:
     - name: install system role network playbook
-      copy:
+      ansible.builtin.copy:
         dest: "/home/ec2-user/example-network-playbook.yml"
         src: "example-network-playbook.yml"
         mode: 0644
@@ -195,7 +195,7 @@
     - rhel_nodes
   gather_facts: no
   tasks:
-    - uri:
+    - ansible.builtin.uri:
         url: "https://{{ inventory_hostname }}:9090/system"
         url_username: "{{ system_user }}"
         url_password: "{{ workshop_password }}"

@@ -1,7 +1,7 @@
 ---
 
 - name: set vars for RHEL 6
-  set_fact:
+  ansible.builtin.set_fact:
     key: "{{ fusion_6.key }}"
     nf_key: "{{ fusion_6.nf_key }}"
     url: "{{ fusion_6.url }}"
@@ -9,7 +9,7 @@
   when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '6'
 
 - name: set vars for RHEL 7
-  set_fact:
+  ansible.builtin.set_fact:
     key: "{{ fusion_7.key }}"
     nf_key: "{{ fusion_7.nf_key }}"
     url: "{{ fusion_7.url }}"
@@ -17,7 +17,7 @@
   when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '7'
 
 - name: set vars for RHEL 8
-  set_fact:
+  ansible.builtin.set_fact:
     key: "{{ fusion_8.key }}"
     nf_key: "{{ fusion_8.nf_key }}"
     url: "{{ fusion_8.url }}"
@@ -25,7 +25,7 @@
   when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
 
 - name: install keys package
-  package:
+  ansible.builtin.package:
     name: distribution-gpg-keys
     state: latest
 
@@ -40,7 +40,7 @@
 
 - name: Import keys
 #  shell: rpmkeys --import "/tmp/fusion.key"
-  rpm_key:
+  ansible.builtin.rpm_key:
     state: present
     key: "{{ item }}"
   loop:

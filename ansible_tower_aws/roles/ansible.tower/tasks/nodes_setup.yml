@@ -4,7 +4,7 @@
 
 - name: Install base packages
   become: yes
-  yum:
+  ansible.builtin.yum:
     name:
       - vim
       - git
@@ -16,13 +16,13 @@
 
 - block:
   - name: Determine newest Ansible repo
-    shell: "subscription-manager repos --list | egrep '^Repo ID:' | egrep 'ansible.*64-rpms' | sort -V -k3 | sed 's/.* //' | tail -1 "
+    ansible.builtin.shell: "subscription-manager repos --list | egrep '^Repo ID:' | egrep 'ansible.*64-rpms' | sort -V -k3 | sed 's/.* //' | tail -1 "
     register: result
 
-  - debug:
+  - ansible.builtin.debug:
       msg: "{{ result.stdout_lines }}"
 
-  - set_fact: 
+  - ansible.builtin.set_fact: 
       ansible_repo: "{{ result.stdout }}"
 
   # ansible has migrated to epel
@@ -33,7 +33,7 @@
 
   - name: Install base packages
     become: yes
-    yum:
+    ansible.builtin.yum:
       name:
         - vim
         - git
@@ -44,17 +44,17 @@
   when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
 
 - name: Fake, if missing, the dbus-1 directory
-  file:
+  ansible.builtin.file:
     path: /usr/lib64/dbus-1
     state: directory
 
 - name: Fake, if missing, the dbus dbus-daemon-launch-helper file
-  file:
+  ansible.builtin.file:
     path: /usr/lib64/dbus-1/dbus-daemon-launch-helper
     state: touch
 
 - name: Install vimrc in home directory
-  copy:
+  ansible.builtin.copy:
     src: "{{ item.src }}"
     dest: "/home/{{ system_user }}/{{ item.dest }}"
     owner: "{{ system_user }}"
@@ -64,7 +64,7 @@
     - { src: "vimrc", dest: ".vimrc" }
 
 - name: Copy over SSH Key to {{ system_user }} home
-  copy: 
+  ansible.builtin.copy: 
     src: "{{ ssh_key_path }}"
     dest: "/home/{{ system_user }}/.ssh/{{ workshop_prefix }}-tower" 
     mode: 0400 
@@ -72,7 +72,7 @@
     owner: "{{ system_user }}"
 
 - name: Template over ansible.cfg
-  template:
+  ansible.builtin.template:
     dest: "/home/{{ system_user }}/.ansible.cfg"
     src: "ansible.cfg.j2"
     owner: "{{ system_user }}"

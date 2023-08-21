@@ -5,7 +5,7 @@
 - name: Wait for AWS AMIs to become initialized
   hosts: localhost
   tasks:
-    - wait_for:
+    - ansible.builtin.wait_for:
         host: "{{ item }}"
         port: 22
         state: started
@@ -37,7 +37,7 @@
   hosts: nodes
   tasks:
     - name: RHEL 7 on AWS via Cloud Access has no available repositories
-      fail:
+      ansible.builtin.fail:
         msg: "Please use RHSM via user ID/password or org ID/activation key."
       when: cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '7'
   roles:
@@ -82,7 +82,7 @@
   gather_facts: no
   pre_tasks:
     - name: Install podman
-      yum:
+      ansible.builtin.yum:
         name: podman
         state: latest
 

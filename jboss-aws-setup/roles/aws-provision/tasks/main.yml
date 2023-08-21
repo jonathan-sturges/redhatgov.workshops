@@ -4,40 +4,40 @@
 # Key
 #---------------------------------------------------
 - name: Check key exists
-  stat:
+  ansible.builtin.stat:
     path: "{{ remote_user_key_file }}"
   register: stat_result
 
 - name: Remove remote key
-  ec2_key: name="{{ remote_user_key }}" region="{{ aws_region }}" state=absent
+  amazon.aws.ec2_key: name="{{ remote_user_key }}" region="{{ aws_region }}" state=absent
   when: stat_result.stat.exists == False
   ignore_errors: yes
 
 - name: Create new key
-  ec2_key: name="{{ remote_user_key }}" region="{{ aws_region }}" state=present
+  amazon.aws.ec2_key: name="{{ remote_user_key }}" region="{{ aws_region }}" state=present
   register: ec2_key
   when: stat_result.stat.exists == False
 
 - name: Create hidden directory
-  file: path="{{ workspace }}" state=directory
+  ansible.builtin.file: path="{{ workspace }}" state=directory
   when: stat_result.stat.exists == False
 
 - name: Copy key file
-  copy:
+  ansible.builtin.copy:
     content: "{{ ec2_key.key.private_key }}"
     dest: "{{ remote_user_key_file }}"
     mode: 0400
   when: stat_result.stat.exists == False
 
 - name: Set key permissions
-  file:
+  ansible.builtin.file:
    path: "{{ remote_user_key_file }}"
    state: touch
    mode: 0400
   when: stat_result.stat.exists == False
 
 - name: Set ec2 key
-  ec2_key:
+  amazon.aws.ec2_key:
     name: "{{ remote_user_key }}"
     region: "{{ aws_region }}"
     aws_access_key: "{{ aws_access_key }}"
@@ -54,7 +54,7 @@
 # VPC
 #---------------------------------------------------
 - name: Create public vpc
-  ec2_vpc_net:
+  amazon.aws.ec2_vpc_net:
    name: "{{ vpc_tag }}"
    cidr_block: "{{ vpc_cidr_block }}"
    region: "{{ aws_region }}"
@@ -66,14 +66,14 @@
   register: vpc_facts
 
 - name: Set vpc fact
-  set_fact:
+  ansible.builtin.set_fact:
    vpc_id: "{{ vpc_facts['vpc']['id'] }}"
 
 #---------------------------------------------------
 # Subnet
 #---------------------------------------------------
 - name: Create public subnet
-  ec2_vpc_subnet:
+  amazon.aws.ec2_vpc_subnet:
    vpc_id: "{{ vpc_id }}"
    cidr: "{{ public_subnet_1_cidr }}"
    az: "{{ aws_region }}a"
@@ -86,14 +86,14 @@
   register: subnet_facts
 
 - name: Set subnet fact
-  set_fact:
+  ansible.builtin.set_fact:
    public_subnet_id: "{{ subnet_facts['subnet']['id'] }}"
 
 #---------------------------------------------------
 # Gateway
 #---------------------------------------------------
 - name: Create internet gateway
-  ec2_vpc_igw:
+  amazon.aws.ec2_vpc_igw:
    vpc_id: "{{ vpc_id }}"
    region: "{{ aws_region }}"
    aws_access_key: "{{ aws_access_key }}"
@@ -102,14 +102,14 @@
   register: igw_facts
 
 - name: Set gateway fact
-  set_fact:
+  ansible.builtin.set_fact:
    igw_id: "{{ igw_facts['gateway_id'] }}"
 
 #---------------------------------------------------
 # Route Table
 #---------------------------------------------------
 - name: Create route table
-  ec2_vpc_route_table:
+  amazon.aws.ec2_vpc_route_table:
    vpc_id: "{{ vpc_id }}"
    region: "{{ aws_region }}"
    aws_access_key: "{{ aws_access_key }}"
@@ -125,7 +125,7 @@
   register: route_facts
 
 - name: Set availability zone fact
-  set_fact:
+  ansible.builtin.set_fact:
     availability_zone: "{{ subnet_facts['subnet']['availability_zone'] }}"
 
 #---------------------------------------------------
@@ -233,7 +233,7 @@
   when: redhat_owner_id is defined
 
 - name: Set ami fact
-  set_fact:
+  ansible.builtin.set_fact:
    ec2_image: "{{ ami_find['results'][0]['ami_id'] }}"
   when: (ec2_image is not defined) and
         (redhat_owner_id is defined)
@@ -248,7 +248,7 @@
   when: ec2_image is defined
 
 - name: Set ami device
-  set_fact:
+  ansible.builtin.set_fact:
     ec2_device: "{{ami_find['results'][0]['root_device_name']}}"
 
 # - debug: msg="{{ ec2_image }}"
@@ -290,10 +290,10 @@
    exact_count: 1
   register: ec2_host
 
-- debug: msg="{{ ec2_host['tagged_instances'][0]['id'] }}"
+- ansible.builtin.debug: msg="{{ ec2_host['tagged_instances'][0]['id'] }}"
 
 - name: Create elastic ip
-  ec2_eip:
+  amazon.aws.ec2_eip:
    device_id: "{{ ec2_host['tagged_instances'][0]['id'] }}"
    region: "{{ aws_region }}"
    aws_access_key: "{{ aws_access_key }}"
@@ -302,7 +302,7 @@
   register: ec2_elastic_ip
 
 - name: Set ip facts
-  set_fact:
+  ansible.builtin.set_fact:
    private_ip: "{{ ec2_host['tagged_instances'][0]['private_ip'] }}"
    public_ip: "{{ ec2_elastic_ip['public_ip'] }}"
    private_dns_name: "{{ ec2_host['tagged_instances'][0]['private_dns_name'] }}"
@@ -319,7 +319,7 @@
 # Route53
 #---------------------------------------------------
 - name: Create private zone
-  route53_zone:
+  amazon.aws.route53_zone:
      zone: "{{ intranet }}"
      state: "present"
      vpc_id: "{{ vpc_id }}"
@@ -332,11 +332,11 @@
 # - debug: msg="{{ private_zone }}"
 
 - name: Set private zone id fact
-  set_fact:
+  ansible.builtin.set_fact:
     private_zone_id: "{{ private_zone['result']['zone_id'] }}"
 
 - name: Create private record
-  route53:
+  amazon.aws.route53:
     hosted_zone_id: "{{ private_zone_id }}"
     zone: "{{ intranet }}"
     record: "{{ ec2_tag }}.{{ intranet }}"
@@ -352,7 +352,7 @@
     aws_secret_key: "{{ aws_secret_key }}"
 
 - name: Create public record
-  route53:
+  amazon.aws.route53:
     zone: "{{ domain }}"
     record: "{{ domain }}"
     type: A
@@ -368,12 +368,12 @@
 # SSH
 #---------------------------------------------------
 - name: Generate ssh key
-  user: "name={{ remote_user_name }} generate_ssh_key=yes"
+  ansible.builtin.user: "name={{ remote_user_name }} generate_ssh_key=yes"
   delegate_to: "{{ public_ip }}"
   remote_user: "{{ remote_user_name }}"
 
 - name: Register public key
-  shell: "cat ~/.ssh/id_rsa.pub"
+  ansible.builtin.shell: "cat ~/.ssh/id_rsa.pub"
   delegate_to: "{{ public_ip }}"
   remote_user: "{{ remote_user_name }}"
   register: "ec2_rsa_pub"
@@ -382,7 +382,7 @@
 # Inventory (in-memory)
 #---------------------------------------------------
 - name: Add host to group 'created_vms'
-  add_host:
+  ansible.builtin.add_host:
     name: "{{ item.ip }}"
     groups: created_vms
     instance_name: "{{ item.name }}"
@@ -390,7 +390,7 @@
     - { name: '{{ ec2_tag }}', ip: '{{ public_ip }}' }
 
 - name: Add host to group 'created_nodes'
-  add_host:
+  ansible.builtin.add_host:
     name: "{{ item.ip }}"
     groups: created_nodes
     instance_name: "{{ item.name }}"

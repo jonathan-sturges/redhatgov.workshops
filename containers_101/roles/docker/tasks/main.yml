@@ -3,7 +3,7 @@
 
 - name: Install Docker
 #  yum: name=docker-1.10.3 state=present
-  yum:
+  ansible.builtin.yum:
     name: docker
 #    state: present
     state: latest
@@ -11,7 +11,7 @@
     - rhel
 
 - name: Start docker
-  service:
+  ansible.builtin.service:
     name: docker
     state: started
     enabled: yes
@@ -19,7 +19,7 @@
     - rhel
 
 - name: Enable insecure registry
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/sysconfig/docker
     state: present
     line: "INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'"
@@ -28,12 +28,12 @@
     - rhel
 
 - name: Setup docker-storage-setup
-  command: echo -e "DEVS=/dev/xvdb\nVG=docker-vg" >> /etc/sysconfig/docker-storage-setup
+  ansible.builtin.command: echo -e "DEVS=/dev/xvdb\nVG=docker-vg" >> /etc/sysconfig/docker-storage-setup
   tags:
     - rhel
 
 - name: restart docker
-  command: systemctl restart docker
+  ansible.builtin.command: systemctl restart docker
 
 # - name: Enable docker-registry
 #   become: yes

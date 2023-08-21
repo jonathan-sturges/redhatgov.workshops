@@ -6,12 +6,12 @@
   tags: packages
 
 - name: Get zsh path
-  command: which zsh 
+  ansible.builtin.command: which zsh 
   register: zsh_path
   tags: configuration
 
 - name: Switch to zsh
-  user:
+  ansible.builtin.user:
     name: "{{ item }}"
     shell: "{{ zsh_path.stdout }}"
   with_items: "{{ zsh_users }}"
@@ -20,7 +20,7 @@
 
 - name: Clone oh-my-zsh repository
   become: yes
-  git:
+  ansible.builtin.git:
     repo: https://github.com/robbyrussell/oh-my-zsh.git
     dest: "/home/{{ item }}/.oh-my-zsh"
     accept_hostkey: yes
@@ -30,7 +30,7 @@
 
 - name: Set permissions for oh my zsh dir
   become: yes
-  file:
+  ansible.builtin.file:
     path: "/home/{{ item }}/.oh-my-zsh"
     owner: "{{ item }}"
     group: "{{ item }}"
@@ -41,7 +41,7 @@
 
 - name: Create zsh config file
   become: yes
-  template:
+  ansible.builtin.template:
     src: zsh.config.j2
     dest: "/home/{{ item }}/.zshrc"
     owner: "{{ item }}"

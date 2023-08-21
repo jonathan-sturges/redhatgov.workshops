@@ -5,7 +5,7 @@
   hosts: localhost
   gather_facts: no
   tasks:
-    - wait_for:
+    - ansible.builtin.wait_for:
         host: "{{ item }}"
         port: 22
         state: started
@@ -38,7 +38,7 @@
   hosts: bastion_rhel_nodes
   gather_facts: no
   tasks:
-    - package:
+    - ansible.builtin.package:
         name: python3-pip
         state: latest
       when: rhel_ver == 'RHEL-8'
@@ -55,7 +55,7 @@
     - role: powerline
   tasks:
     - name: push out student templates
-      copy:
+      ansible.builtin.copy:
         src: "{{ item }}"
         dest: "~{{ system_user }}/{{ item }}"
         mode: 0644
@@ -70,26 +70,26 @@
   gather_facts: yes
   tasks:
     - name: make staging directory for cert
-      file:
+      ansible.builtin.file:
         path: "/home/{{ system_user }}/files"
         state: directory
         owner: "ec2-user"
         group: "ec2-user"
 
     - name: install cockpit package if it's not present
-      package:
+      ansible.builtin.package:
         name: cockpit-ws
         state: present
 
     - name: install real certificate to web console
-      copy:
+      ansible.builtin.copy:
         dest: "/etc/cockpit/ws-certs.d/acme.cert"
         content: "{{ lookup('file', deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_cert.pem') }}\n{{ lookup('file', deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_key.pem') }}"
         owner: "root"
         group: "cockpit-ws"
 
     - name: stage real cert for tower
-      copy:
+      ansible.builtin.copy:
         dest: "~ec2-user/cert.pem"
         src: "{{ deploy_working_dir }}/{{ workshop_prefix }}.{{ domain_name }}_cert.pem"
         owner: "ec2-user"
@@ -113,12 +113,12 @@
   gather_facts: yes
   tasks:
     - name: install cockpit package if it's not present
-      package:
+      ansible.builtin.package:
         name: cockpit-ws
         state: present
 
     - name: install real certificate to web console
-      copy:
+      ansible.builtin.copy:
         dest: "/etc/cockpit/ws-certs.d/acme.cert"
         content: "{{ lookup('file', deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_cert.pem') }}\n{{ lookup('file', deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_key.pem') }}"
         owner: "root"
@@ -132,12 +132,12 @@
   gather_facts: yes
   tasks:
     - name: make staging directory for cert
-      file:
+      ansible.builtin.file:
         path: "/home/{{ system_user }}/files"
         state: directory 
 
     - name: install real cert and key for container registry
-      copy:
+      ansible.builtin.copy:
         dest: "/home/{{ system_user }}/files/{{ item.name }}"
         src: "{{ item.file }}"
       loop:
@@ -180,7 +180,7 @@
   gather_facts: yes
   tasks:
     - name: open firewalld services
-      firewalld:
+      ansible.posix.firewalld:
         service: "{{ item }}"
         permanent: yes
         state: enabled
@@ -188,7 +188,7 @@
       - 'http'
       - 'https'
     - name: restart service
-      service:
+      ansible.builtin.service:
         name: firewalld
         state: reloaded
 
@@ -202,18 +202,18 @@
   tasks:
     # note: add mapping of 2 nodes -> 1 tower with nodes in /etc/hosts
     - name: copy ssh key for root
-      copy:
+      ansible.builtin.copy:
         src: "{{ ssh_key_path }}"
         dest: "~root/.ssh/id_rsa"
         mode: 0600
     - name: copy ssh key for user
-      copy:
+      ansible.builtin.copy:
         src: "{{ ssh_key_path }}"
         dest: "~{{ system_user }}/.ssh/id_rsa"
         mode: 0600
       become: no
     - name: install required software
-      package:
+      ansible.builtin.package:
         name: "{{ item }}"
         state: latest
       with_items:
@@ -236,24 +236,24 @@
       - bc
       - curl
     - name: copy files
-      copy:
+      ansible.builtin.copy:
         src: files
         dest: ~ec2-user
       become: no
     - name: copy templates
-      template:
+      ansible.builtin.template:
         src: ssl_cert_cnf_template.j2
         dest: ~ec2-user/files/nodes/registry-files/gen-certs/myserver.cnf
       become: no
     - name: open firewalld ports
-      firewalld:
+      ansible.posix.firewalld:
         port: "{{ item }}"
         permanent: yes
         state: enabled
       with_items:
       - '5000/tcp'
     - name: restart service
-      service:
+      ansible.builtin.service:
         name: firewalld
         state: reloaded
 

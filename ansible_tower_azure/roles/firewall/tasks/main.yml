@@ -6,12 +6,12 @@
 #---------------------------------------------------
 
 - name: Check to see if firewalld is enabled
-  command: systemctl is-enabled firewalld
+  ansible.builtin.command: systemctl is-enabled firewalld
   register: sif_result
   ignore_errors: True
 
 - name: open web ports
-  firewalld:
+  ansible.posix.firewalld:
     port: "{{ item }}/tcp"
     zone: public
     permanent: true

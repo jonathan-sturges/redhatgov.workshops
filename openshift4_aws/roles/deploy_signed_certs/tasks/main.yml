@@ -1,36 +1,36 @@
 ---
 
 - name: set final_certs var for these tasks
-  set_fact:
+  ansible.builtin.set_fact:
     final_certs: "{{ openshift_build_path }}/tmp/final"
 
 - name: Check if fullchain.pem file already exists
-  stat:
+  ansible.builtin.stat:
     path: "{{ final_certs }}/fullchain.pem"
   register: full_chain
 
 # Grab aws settings from credentials file if it exists
 - name: set aws_access_key_id
-  shell: aws configure get aws_access_key_id
+  ansible.builtin.shell: aws configure get aws_access_key_id
   register: aws_access_key_id
   ignore_errors: yes
   when: not full_chain.stat.exists
 
 - name: set aws_secret_access_key
-  shell: aws configure get aws_secret_access_key
+  ansible.builtin.shell: aws configure get aws_secret_access_key
   register: aws_secret_access_key
   ignore_errors: yes
   when: not full_chain.stat.exists
 
 - name: set aws_session_token
-  shell: aws configure get aws_session_token
+  ansible.builtin.shell: aws configure get aws_session_token
   register: aws_session_token
   ignore_errors: yes
   when: not full_chain.stat.exists
 
 # Set vars to ENV variables if set, if not use above vars from AWS creds file
 - name: Set var aws_access_key_id
-  set_fact:
+  ansible.builtin.set_fact:
     aws_access_key_id: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') | default(aws_access_key_id.stdout, true) }}"
     aws_secret_access_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') | default(aws_secret_access_key.stdout, true) }}"
     aws_session_token: "{{ lookup('env', 'AWS_SESSION_TOKEN') | default(aws_session_token.stdout, true) }}"
@@ -46,7 +46,7 @@
   when: not full_chain.stat.exists
 
 - name: set letsencrypt facts
-  set_fact:
+  ansible.builtin.set_fact:
     le_wildcard: "*.{{le_wildcard.resources[0].status.domain}}"
     le_api: "{{ le_wildcard.resources[0].status.domain | regex_replace('^apps\\.', 'api.') }}"
     le_secret_name: "le-certs-{{ ansible_date_time.date }}"
@@ -61,7 +61,7 @@
   when: not full_chain.stat.exists
 
 - name: download and extract acme installer
-  unarchive:
+  ansible.builtin.unarchive:
     src: https://github.com/acmesh-official/acme.sh/archive/{{ acme_version }}.tar.gz
     dest: "{{ openshift_build_path }}/tmp"
     remote_src: yes
