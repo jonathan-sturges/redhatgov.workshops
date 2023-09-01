@@ -9,7 +9,7 @@ localhost  ansible_connection=local  ansible_python_interpreter='/usr/bin/env py
 [admin_rhel_node]
 {% if admin_rhel_count is defined %}
 {% for n in range( admin_rhel_count|int ) %}
-admin.{{ workshop_prefix }}.{{ domain_name }} ansible_ssh_host={{ ec2_rhel_admin.instances[n].public_ip }}
+admin.{{ workshop_prefix }}.{{ domain_name }} ansible_ssh_host={{ ec2_rhel_admin.instances[n].public_ip_address }}
 {% endfor %}
 {% endif %}
 

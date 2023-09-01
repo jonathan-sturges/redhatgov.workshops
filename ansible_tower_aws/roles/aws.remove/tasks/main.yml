@@ -45,12 +45,12 @@
     route_id: ""
     subnet_id: ""
     vpc_id: ""
-    admin_rhel_instance_ids: []
-    tower_rhel_instance_ids: []
-    bastion_rhel_instance_ids: []
-    rhel_instance_ids: []
+    admin_rhel_instance_ids: ""
+    tower_rhel_instance_ids: ""
+    bastion_rhel_instance_ids: ""
+    rhel_instance_ids: ""
     rhel_group_id: ""
-    win_instance_ids: []
+    win_instance_ids: ""
     win_group_id: ""
 
 - name: lookup running RHEL admin instances
@@ -89,23 +89,23 @@
 
 - name: Append RHEL admin instances to list
   ansible.builtin.set_fact:
-    admin_rhel_instance_ids: "{{ admin_rhel_instance_ids }} + [ '{{ item.instance_id }}' ]"
-  with_items: "{{ ec2_rhel_admin.instances }}"
+    admin_rhel_instance_ids: " '{{ item.instance_id }}', {{ admin_rhel_instance_ids }}"
+  loop: "{{ ec2_rhel_admin.instances|flatten(levels=1) }}"
 
 - name: Append RHEL instances to list
   ansible.builtin.set_fact:
-    rhel_instance_ids: "{{ rhel_instance_ids }} + [ '{{ item.instance_id }}' ]"
-  with_items: "{{ ec2_rhel.instances }}"
+    rhel_instance_ids: " '{{ item.instance_id }}', {{ rhel_instance_ids }}"
+  loop: "{{ ec2_rhel.instances|flatten(levels=1) }}"
 
 - name: Append RHEL Tower instances to list
   ansible.builtin.set_fact:
-    tower_rhel_instance_ids: "{{ tower_rhel_instance_ids }} + [ '{{ item.instance_id }}' ]"
-  with_items: "{{ ec2_tower_rhel.instances }}"
+    tower_rhel_instance_ids: " '{{ item.instance_id }}', {{ tower_rhel_instance_ids }}"
+  loop: "{{ ec2_tower_rhel.instances|flatten(levels=1) }}"
 
 - name: Append RHEL bastion instances to list
   ansible.builtin.set_fact:
-    bastion_rhel_instance_ids: "{{ bastion_rhel_instance_ids }} + [ '{{ item.instance_id }}' ]"
-  with_items: "{{ ec2_bastion_rhel.instances }}"
+    bastion_rhel_instance_ids: " '{{ item.instance_id }}', {{ bastion_rhel_instance_ids }}"
+  loop: "{{ ec2_bastion_rhel.instances|flatten(levels=1) }}"
 
 - name: lookup running Windows instances
   amazon.aws.ec2_instance_info:
@@ -117,10 +117,10 @@
 - name: Append Windows instances to list`
   ansible.builtin.set_fact:
     win_instance_ids: "{{ win_instance_ids }} + [ '{{ item.instance_id }}' ]"
-  with_items: "{{ ec2_win.instances }}"
+  loop: "{{ ec2_win.instances|flatten(levels=1) }}"
 
 - name: lookup running windows security groups
-  ec2_group_info:
+  amazon.aws.ec2_security_group_info:
     region: "{{ region }}"
     filters:
       tag:win: "{{ workshop_abbrev }}-{{ workshop_prefix }}"
@@ -132,7 +132,7 @@
   when: ec2_win_grp.security_groups|length > 0
 
 - name: lookup running rhel security groups
-  ec2_group_info:
+  amazon.aws.ec2_security_group_info:
     region: "{{ region }}"
     filters:
       tag:rhel: "{{ workshop_abbrev }}-{{ workshop_prefix }}"
@@ -187,7 +187,7 @@
 #===============================================================================
 
 - name: Lookup existing DNS records
-  community.aws.route53:
+  amazon.aws.route53:
     state: get
     zone: "{{ domain_name }}"
     record: "{{ item }}"
@@ -212,68 +212,68 @@
   loop: "{{ recs[ 'results' ] }}"
 
 - name: Remove Windows instances
-  ec2:
+  amazon.aws.ec2_instance:
+    security_group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-win-sg"
     key_name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
-    group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-win-sg"
     region: "{{ region }}"
     instance_type: "{{ win_instance_type }}"
-    image: "{{ windows_ami.stdout if auto_ami == true else regions[region][win_ver].ami }}"
+    image_id: "{{ windows_ami.stdout if auto_ami == true else regions[region][win_ver].ami }}"
     vpc_subnet_id: "{{ subnet_id }}"
     wait: true
-    instance_ids: "{{ win_instance_ids }}"
+    instance_ids: "[ {{ win_instance_ids }} ]"
     state: absent
   when: win_instance_ids|length > 0
 
 - name: Remove RHEL Tower instances
-  ec2:
+  amazon.aws.ec2_instance:
+    security_group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     key_name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
-    group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     region: "{{ region }}"
     instance_type: "{{ tower_instance_type }}"
-    image: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
+    image_id: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
     vpc_subnet_id: "{{ subnet_id }}"
     wait: true
-    instance_ids: "{{ tower_rhel_instance_ids }}"
+    instance_ids: "[ {{ tower_rhel_instance_ids }} ]"
     state: absent
   when: tower_rhel_instance_ids|length > 0
     #  when: false
 
 - name: Remove RHEL admin instances
-  ec2:
+  amazon.aws.ec2_instance:
+    security_group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     key_name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
-    group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     region: "{{ region }}"
     instance_type: "{{ rhel_instance_type }}"
-    image: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
+    image_id: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
     vpc_subnet_id: "{{ subnet_id }}"
     wait: true
-    instance_ids: "{{ admin_rhel_instance_ids }}"
+    instance_ids: "[ {{ admin_rhel_instance_ids }} ]"
     state: absent
   when: admin_rhel_instance_ids|length > 0
 
 - name: Remove RHEL bastion instances
-  ec2:
+  amazon.aws.ec2_instance:
+    security_group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     key_name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
-    group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     region: "{{ region }}"
     instance_type: "{{ bastion_instance_type }}"
-    image: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
+    image_id: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
     vpc_subnet_id: "{{ subnet_id }}"
     wait: true
-    instance_ids: "{{ bastion_rhel_instance_ids }}"
+    instance_ids: "[ {{ bastion_rhel_instance_ids }} ]"
     state: absent
   when: bastion_rhel_instance_ids|length > 0
 
 - name: Remove RHEL instances
-  ec2:
+  amazon.aws.ec2_instance:
+    security_group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     key_name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
-    group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     region: "{{ region }}"
     instance_type: "{{ rhel_instance_type }}"
-    image: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
+    image_id: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
     vpc_subnet_id: "{{ subnet_id }}"
     wait: true
-    instance_ids: "{{ rhel_instance_ids }}"
+    instance_ids: "[ {{ rhel_instance_ids }} ]"
     state: absent
   when: rhel_instance_ids|length > 0
 
@@ -300,13 +300,13 @@
     state: absent
 
 - name: Delete Windows security group
-  ec2_group:
+  amazon.aws.ec2_security_group:
     name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-win-sg"
     region: "{{ region }}"
     state: absent
 
 - name: Delete RHEL security group
-  ec2_group:
+  amazon.aws.ec2_security_group:
     name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     region: "{{ region }}"
     state: absent
