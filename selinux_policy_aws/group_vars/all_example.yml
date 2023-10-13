@@ -11,8 +11,9 @@ workshop_prefix:                  "selinux" # Workshop name - NO underscores!
 workshop_phase:                   "prod" # Can be "dev", "test", or "prod"
 workshop_appCode:                 "????" # Waiting for code creation
 execution:                        "local" # when not running from Tower, define this variable
-beta:                             false # when true, use beta respoitories
+jboss:                            false # when true, configure JBoss/Maven
 graphical:                        false # when true, install a graphical desktop on the tower nodes
+beta:                             false # when true, use beta respoitories
 
 ################################################################################
 # ANSIBLE ROLE KEY         |      VALUE
@@ -21,9 +22,7 @@ graphical:                        false # when true, install a graphical desktop
 deploy_working_dir:               "{{ lookup('env','PWD') }}/.redhatgov"
 # aws                      |      AWS Route 53
 domain_name:                      ""
-zone_id:                          ""
 # aws                      |      AWS Node Counts
-tower_rhel_count:                 "0"            # RHEL Ansible Tower node(s)
 rhel_count:                       "2"            # RHEL node(s)
 win_count:                        "0"            # Windows node(s)
 #------------------------------------------------------------------------------
@@ -43,9 +42,9 @@ auto_ami:                         true           # automatically identify AMI in
 #------------------------------------------------------------------------------
 # instance_types
 win_instance_type:                "t3a.large"
-tower_instance_type:              "t3a.large"
 rhel_instance_type:               "t3a.small"
-#-------------------------------------------------------------------------------
+tower_instance_type:              "t3a.small"
+#------------------------------------------------------------------------------
 # subscription_manager     |      Red Hat Subscription via Cloud Access
 cloud_access:                     true
 # subscription_manager     |      Red Hat Subscription via username & password
@@ -58,9 +57,8 @@ rhsm_org_id:                      ""
 #-------------------------------------------------------------------------------
 # LetsEncrypt              |      email
 letsencrypt_email:                "someone@redhat.com"
-letsencrypt:                      false
 #-------------------------------------------------------------------------------
-# console                  |      password
+# wetty                    |      password
 workshop_password:                "" # Note that Windows 2016 requires 3 character classes and 10 characters
 #------------------------------------------------------------------------------
 # ports to open            |      Add any ports that you may need to this dict
@@ -74,10 +72,6 @@ ports:
     - "https"
     3389:
     - "rdp"
-    5986:
-    - "winrm https"
-    8080:
-    - "jboss"
     8443:
     - "vscode"
     8888:
