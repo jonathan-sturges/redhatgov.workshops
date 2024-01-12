@@ -133,13 +133,14 @@
       register: result
 
     - ansible.builtin.set_fact:
-        httpd_packages: "{{ httpd_packages|default([]) }} + [ '{{ item.name + '-' + item.version + '-' + item.release + '.' + item.arch }}']"
+        httpd_packages: "{{ httpd_packages|default([]) + [item.name + '-' + item.version + '-' + item.release + '.' + item.arch] }}"
+      when:  item.arch == ansible_facts['architecture']
       with_items:
       - "{{ result.results }}"
 
     - name: install oldest available version of httpd
       ansible.builtin.yum:
-        name: "{{ httpd_packages | sort_versions | first }}"
+        name: "{{ httpd_packages | list | select() | community.general.version_sort | first }}"
         state: present
 
     - name: create ssh key for ec2-user
