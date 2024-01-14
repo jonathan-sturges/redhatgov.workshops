@@ -253,6 +253,9 @@
     exact_count: "{{ admin_rhel_count }}"
     filters:
       tag-key: rhel_admin
+      key-name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
+      instance-state-name: pending
+      instance-state-name: running
   register: ec2_rhel_admin
   when: admin_rhel_count is defined and admin_rhel_count|int > 0
 
@@ -282,6 +285,9 @@
     exact_count: "{{ rhel_count }}"
     filters:
       tag-key: rhel
+      key-name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
+      instance-state-name: pending
+      instance-state-name: running
   register: ec2_rhel
 
 - name: Create RHEL Bastion instances (container security)
@@ -309,6 +315,9 @@
     exact_count: "{{ student_count }}"
     filters:
       tag-key: bastion_rhel
+      key-name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
+      instance-state-name: pending
+      instance-state-name: running
   register: ec2_bastion_rhel
   when: workshop == "container_security"
 
@@ -362,6 +371,9 @@
     exact_count: "{{ tower_rhel_count }}"
     filters:
       tag-key: tower_rhel
+      key-name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
+      instance-state-name: pending
+      instance-state-name: running
   register: ec2_tower_rhel
   when: tower_rhel_count is defined and tower_rhel_count|int > 0
 
@@ -385,6 +397,9 @@
     exact_count: "{{ win_count }}"
     filters:
       tag-key: win
+      key-name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
+      instance-state-name: pending
+      instance-state-name: running
   register: ec2_win
   when:  win_count is defined and win_count|int > 0
 
