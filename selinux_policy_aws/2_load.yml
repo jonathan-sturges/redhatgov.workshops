@@ -74,7 +74,7 @@
         name: "{{ item }}"
         state: latest
       loop:
-      - ansible
+      - ansible-core
       - git
 
     - name: Install a test SELinux log
@@ -108,12 +108,19 @@
     - name: install real certificate to web console
       ansible.builtin.copy:
         dest: "/etc/cockpit/ws-certs.d/acme.cert"
-        content: "{{ lookup('file', deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_cert.pem') }}\n{{ lookup('file', deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_key.pem') }}"
+        src: "{{ deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_cert.pem' }}"
         owner: "root"
-        group: "cockpit-ws"
+        group: "cockpit-wsinstance"
+
+    - name: install real private key to web console
+      ansible.builtin.copy:
+        dest: "/etc/cockpit/ws-certs.d/acme.key"
+        src: "{{ deploy_working_dir + '/' + workshop_prefix + '.' + domain_name + '_key.pem' }}"
+        owner: "root"
+        group: "cockpit-wsinstance"
 
     - name: restart web console
-      systemd:
+      ansible.builtin.systemd:
         name: "cockpit"
         state: restarted
   tags: install

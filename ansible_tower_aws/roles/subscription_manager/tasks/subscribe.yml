@@ -52,7 +52,6 @@
   ansible.builtin.command: subscription-manager status
   register: sm_result
   ignore_errors: True
-  when: not cloud_access
   tags:
     - rhel
 
@@ -80,18 +79,11 @@
 - ansible.builtin.debug:
     var: sm_result
 
-- name: Remove RHUI client (RHEL 6)
-  ansible.builtin.package:
-    name: rh-amazon-rhui-client
-    state: absent
-  when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '6'
-
-
 - name: Remove RHUI client (RHEL 8)
   ansible.builtin.package:
     name: rh-amazon-rhui-client
     state: absent
-  when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
+  when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8' and (username or rhsm_activationkey)
 
 - name: Subscribe to RHSM via activation key / org id
   block:
@@ -109,7 +101,7 @@
         force_register: true
         state: present
       register: actkey_result
-  when: not cloud_access and sm_result.failed and not username
+  when: sm_result.failed and not username
   tags:
     - rhel
 
@@ -129,27 +121,24 @@
         pool: "{{ pool_id }}"
         force_register: true
         state: present
-  when: not cloud_access and sm_result.failed and not rhsm_activationkey
+  when: sm_result.failed and not rhsm_activationkey
   tags:
     - rhel
+
+- name: Ensure RHSM manages repos
+  ansible.builtin.command:
+    cmd: subscription-manager config --rhsm.manage_repos=1
+  when: ansible_distribution == 'RedHat' and (username or rhsm_activationkey)
 
 #---------------------------------------------------
 # Add Required Repositories
 #---------------------------------------------------
 - name: RHEL 8 tasks
   ansible.builtin.import_tasks: repos-rhel8.yml
-  when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8' and beta|default(False)==False
+  when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8' and beta|default(False)==False and (username or rhsm_activationkey)
 
 - name: RHEL 8 beta tasks
   ansible.builtin.import_tasks: repos-rhel8beta.yml
-  when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8' and beta|default(False)==True
-
-- name: RHEL 7 tasks
-  ansible.builtin.import_tasks: repos-rhel7.yml
-  when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '7'
-
-- name: RHEL 6 tasks
-  ansible.builtin.import_tasks: repos-rhel6.yml
-  when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '6'
+  when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8' and beta|default(False)==True and (username or rhsm_activationkey)
 
 ...

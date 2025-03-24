@@ -17,7 +17,7 @@
 - name: define installation, issuance and revoking commands
   ansible.builtin.set_fact:
     install_cmd:  "{{ final_certs }}/tmp/acme.sh-{{ acme_version }}/acme.sh --server '{{ server }}' --install-cert {{ fqdns }} --cert-file '{{ final_certs }}/{{ cert_name }}' --key-file '{{ final_certs }}/{{ key_name }}' --fullchain-file '{{ final_certs }}/{{ fullchain_name }}' --ca-file '{{ final_certs }}/ca.cer' --home '{{ final_certs }}/tmp' --cert-home '{{ final_certs }}/tmp' --config-home '{{ final_certs }}/tmp' --debug"
-    issue_cmd:    "{{ final_certs }}/tmp/acme.sh-{{ acme_version }}/acme.sh --server '{{ server }}' --issue --dns dns_aws {{ fqdns }} --home '{{ final_certs }}/tmp' --cert-home '{{ final_certs }}/tmp' --config-home '{{ final_certs }}/tmp' -m '{{ email }}' --debug"
+    issue_cmd:    "{{ final_certs }}/tmp/acme.sh-{{ acme_version }}/acme.sh --server '{{ server }}' --issue --dns dns_aws {{ fqdns }} --home '{{ final_certs }}/tmp' --cert-home '{{ final_certs }}/tmp' --config-home '{{ final_certs }}/tmp' -m '{{ email }}' --debug --force"
     revoke_cmd:   "{{ final_certs }}/tmp/acme.sh-{{ acme_version }}/acme.sh --server '{{ server }}' --revoke --revoke-reason 0 {{ fqdns }} --home '{{ final_certs }}/tmp' --cert-home '{{ final_certs }}/tmp' --config-home '{{ final_certs }}/tmp' -m '{{ email }}' --debug"
 
 - name: create cert directory

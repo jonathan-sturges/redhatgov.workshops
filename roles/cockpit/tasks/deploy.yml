@@ -18,7 +18,6 @@
       state: latest
     with_items:
     - cockpit
-    - cockpit-dashboard
     - cockpit-shell
     - cockpit-system
     - cockpit-ws
