@@ -5,34 +5,34 @@
 #===============================================================================
 
 - name: Find latest RHEL AMI
-  shell:
+  ansible.builtin.shell:
     cmd: aws ec2 describe-images --owners 309956199498 --region "{{ region }}" --filters "Name=architecture,Values=x86_64" --filters "Name=name,Values={{ rhel_ver }}*x86_64*{{ 'Access2' if cloud_access == true else 'Hourly2' }}*" --query 'Images[*].[Name,ImageId]' --output text  | sort -V | awk '$1 !~ /.*BETA.*/ && $1 !~ /.*GA.*/ {ami=$2} END{print ami}'
   register: rhel_ami
 
 - name: Find latest Windows Server AMI
-  shell:
+  ansible.builtin.shell:
     cmd: aws ec2 describe-images --region "{{ region }}" --filters "Name=architecture,Values=x86_64" --filters "Name=name,Values={{ win_ver }}-English-Full-Base*" --query 'Images[*].[Name,ImageId]' --output text  | sort -V | awk '$1 !~ /.*BETA.*/ {ami=$2} END{print ami}'
   register: windows_ami
 
 - name: RHEL AMI
-  debug:
+  ansible.builtin.debug:
     msg: "Using AWS {{ region }} {{ rhel_ver }} AMI: {{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
 
 - name: Windows AMI
-  debug:
+  ansible.builtin.debug:
     msg: "Using AWS {{ region }} {{ win_ver }} AMI: {{ windows_ami.stdout if auto_ami == true else regions[region][win_ver].ami }}"
 
 - name: deploy container security workshop
   block:
     - name: create DNS name list
-      shell: "files/dns-list-create.sh {{ student_nodes_count }} {{ student_count }} {{ domain_name }} {{ workshop_prefix }}"
+      ansible.builtin.shell: "files/dns-list-create.sh {{ student_nodes_count }} {{ student_count }} {{ domain_name }} {{ workshop_prefix }}"
       register: dns_name_list
 
-    - debug:
+    - ansible.builtin.debug:
         var: dns_name_list
 
     - name: define container_security required racts
-      set_fact:
+      ansible.builtin.set_fact:
         rhel_count: "{{ student_count|int*student_nodes_count|int }}"
 
   when: workshop == "container_security"
@@ -41,7 +41,7 @@
 #  Deployment directory creation
 #---------------------------------------------------
 - name: Make temporary location to run deployment
-  file:
+  ansible.builtin.file:
     path: "{{ deploy_working_dir }}"
     state: directory
 
@@ -49,7 +49,7 @@
 #  WinRM templating
 #---------------------------------------------------
 - name: Template Windows WinRM configuration
-  template:
+  ansible.builtin.template:
     dest: "{{ winrm_path }}"
     src: "winrm.txt.j2"
 
@@ -57,24 +57,24 @@
 #  EC2 INI Creation
 #---------------------------------------------------
 - name: Template EC2 INI File
-  template: dest="{{ inventory_working_dir }}/ec2.ini"  src=ec2.ini.j2
+  ansible.builtin.template: dest="{{ inventory_working_dir }}/ec2.ini"  src=ec2.ini.j2
   when: execution is defined
 
 #---------------------------------------------------
 #  SSH Key
 #---------------------------------------------------
 - name: Create EC2 keypair
-  ec2_key:
+  amazon.aws.ec2_key:
     name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
     region: "{{ region }}"
     state: present
   register: ec2_key
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_key
 
 - name: Create ssh keypair
-  copy:
+  ansible.builtin.copy:
     content: "{{ ec2_key.key.private_key }}\n"
     dest: "{{ ssh_key_path }}"
     mode: 0400
@@ -84,7 +84,7 @@
 #  Create AWS objects
 #---------------------------------------------------
 - name: Create VPC
-  ec2_vpc_net:
+  amazon.aws.ec2_vpc_net:
     name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-vpc"
     region: "{{ region }}"
     cidr_block: "10.0.0.0/16"
@@ -97,11 +97,11 @@
     state: present
   register: ec2_vpc
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_vpc
 
 - name: Create VPC internet gateway
-  ec2_vpc_igw:
+  amazon.aws.ec2_vpc_igw:
     region: "{{ region }}"
     vpc_id: "{{ ec2_vpc.vpc.id }}"
     state: present
@@ -112,11 +112,11 @@
       workshop_prefix: "{{ workshop_prefix }}"
   register: ec2_igw
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_igw
 
 - name: define ports list for security groups
-  set_fact:
+  ansible.builtin.set_fact:
     ports_list_of_dicts: |
         {% set res = [] -%}
         {% if ports.tcp != None %}
@@ -135,7 +135,7 @@
         {%- endif %}
         {{ res }}
 
-- debug:
+- ansible.builtin.debug:
     var: ports_list_of_dicts
 
 - name: Create RHEL security group
@@ -153,7 +153,7 @@
     state: present
   register: result
 
-- debug:
+- ansible.builtin.debug:
     var: result
 
 - name: Create Windows security group
@@ -171,11 +171,11 @@
     state: present
   register: result
 
-- debug:
+- ansible.builtin.debug:
     var: result
 
 - name: Create public subnet
-  ec2_vpc_subnet:
+  amazon.aws.ec2_vpc_subnet:
     cidr: "10.0.2.0/24"
     region: "{{ region }}"
     vpc_id: "{{ ec2_vpc.vpc.id }}"
@@ -187,13 +187,14 @@
     wait: yes
   register: ec2_subnet
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_subnet
 
 - name: Create private subnet
-  ec2_vpc_subnet:
+  amazon.aws.ec2_vpc_subnet:
     cidr: "10.0.3.0/24"
     region: "{{ region }}"
+    az: "{{ ec2_subnet.subnet.availability_zone }}"
     vpc_id: "{{ ec2_vpc.vpc.id }}"
     tags:
       Name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-private-subnet"
@@ -203,11 +204,11 @@
     wait: yes
   register: ec2_private_subnet
 
-- debug:
-    var: ec2_subnet
+- ansible.builtin.debug:
+    var: ec2_private_subnet
 
 - name: Create VPC route table
-  ec2_vpc_route_table:
+  amazon.aws.ec2_vpc_route_table:
     region: "{{ region }}"
     vpc_id: "{{ ec2_vpc.vpc.id }}"
     subnets:
@@ -224,20 +225,21 @@
     state: present
   register: ec2_route
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_route
 
 - name: Create RHEL admin host
-  ec2:
-    assign_public_ip: yes
+  amazon.aws.ec2_instance:
+    network:
+      assign_public_ip: true
     key_name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
-    group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
+    security_group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     region: "{{ region }}"
     instance_type: "{{ rhel_instance_type }}"
-    image: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
+    image_id: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
     vpc_subnet_id: "{{ ec2_subnet.subnet.id }}"
     wait: true
-    instance_tags:
+    tags:
       Name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-admin"
       username: "{{ local_user }}"
       workshop_prefix: "{{ workshop_prefix }}"
@@ -249,21 +251,27 @@
       BusinessUnit: "415"
       AppCode: "{{ workshop_appCode }}"
     exact_count: "{{ admin_rhel_count }}"
-    count_tag: rhel_admin
+    filters:
+      tag-key: rhel_admin
+      key-name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
+      instance-state-name: pending
+      instance-state-name: running
   register: ec2_rhel_admin
+  when: admin_rhel_count is defined and admin_rhel_count|int > 0
 
 - name: Create RHEL instances
-  ec2:
-    assign_public_ip: yes
+  amazon.aws.ec2_instance:
+    network:
+      assign_public_ip: true
     key_name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
-    group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
+    security_group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     region: "{{ region }}"
     instance_type: "{{ rhel_instance_type }}"
-    image: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
+    image_id: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
     vpc_subnet_id: "{{ ec2_subnet.subnet.id }}"
     volumes: "{{ rhel_instance_vols }}"
     wait: true
-    instance_tags:
+    tags:
       Name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel"
       username: "{{ local_user }}"
       workshop_prefix: "{{ workshop_prefix }}"
@@ -275,20 +283,25 @@
       BusinessUnit: "415"
       AppCode: "{{ workshop_appCode }}"
     exact_count: "{{ rhel_count }}"
-    count_tag: rhel
+    filters:
+      tag-key: rhel
+      key-name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
+      instance-state-name: pending
+      instance-state-name: running
   register: ec2_rhel
 
 - name: Create RHEL Bastion instances (container security)
-  amazon.aws.ec2:
-    assign_public_ip: yes
+  amazon.aws.ec2_instance:
+    network:
+      assign_public_ip: true
     key_name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
-    group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
+    security_group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     region: "{{ region }}"
     instance_type: "{{ bastion_instance_type }}"
-    image: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
+    image_id: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
     vpc_subnet_id: "{{ ec2_subnet.subnet.id }}"
     wait: true
-    instance_tags:
+    tags:
       Name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-bastion_rhel"
       username: "{{ local_user }}"
       workshop_prefix: "{{ workshop_prefix }}"
@@ -300,86 +313,106 @@
       BusinessUnit: "415"
       AppCode: "{{ workshop_appCode }}"
     exact_count: "{{ student_count }}"
-    count_tag: bastion_rhel
+    filters:
+      tag-key: bastion_rhel
+      key-name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
+      instance-state-name: pending
+      instance-state-name: running
   register: ec2_bastion_rhel
   when: workshop == "container_security"
 
+- name: Loop debugging
+  ansible.builtin.debug:
+    msg: "{{ item.instance_id }}"
+  loop: "{{ ec2_rhel.instances|flatten(levels=1) }}"
+
 - name: Attach additional network interface to RHEL nodes
-  ec2_eni:
-    instance_id: "{{ item.id }}"
+  amazon.aws.ec2_eni:
+    instance_id: "{{ item.instance_id }}"
     device_index: 1
     subnet_id: "{{ ec2_private_subnet.subnet.id }}"
     private_ip_address: "10.0.3.{{ 10 + item.ami_launch_index|int }}"
     region: "{{ region }}"
     attached: yes
     state: present
-  with_items: "{{ ec2_rhel.tagged_instances }}"
+  loop: "{{ ec2_rhel.instances|flatten(levels=1) }}"
   register: eni
 
-- debug:
+- ansible.builtin.debug:
     var: eni
 
 - name: Set additional interfaces to auto delete on instance termination
-  ec2_eni:
+  amazon.aws.ec2_eni:
     eni_id: "{{ item.interface.id }}"
     delete_on_termination: yes
     region: "{{ region }}"
   with_items: "{{ eni.results }}"
   register: eni_results
 
-- debug:
+- ansible.builtin.debug:
     var: eni_results
 
 - name: Create RHEL Tower instances
-  ec2:
-    assign_public_ip: yes
+  amazon.aws.ec2_instance:
+    network:
+      assign_public_ip: true
     key_name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
-    group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
+    security_group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-sg"
     region: "{{ region }}"
     instance_type: "{{ tower_instance_type }}"
-    image: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
+    image_id: "{{ rhel_ami.stdout if auto_ami == true else regions[region][rhel_ver].ami }}"
     vpc_subnet_id: "{{ ec2_subnet.subnet.id }}"
     wait: true
-    instance_tags:
+    tags:
       Name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-tower_rhel"
       username: "{{ local_user }}"
       workshop_prefix: "{{ workshop_prefix }}"
       tower_rhel: "{{ workshop_abbrev }}-{{ workshop_prefix }}"
     exact_count: "{{ tower_rhel_count }}"
-    count_tag: tower_rhel
+    filters:
+      tag-key: tower_rhel
+      key-name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
+      instance-state-name: pending
+      instance-state-name: running
   register: ec2_tower_rhel
-  when: tower_rhel_count is defined
+  when: tower_rhel_count is defined and tower_rhel_count|int > 0
 
 - name: Create Windows instances
-  ec2:
-    assign_public_ip: yes
+  amazon.aws.ec2_instance:
+    network:
+      assign_public_ip: true
     key_name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
-    group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-win-sg"
+    security_group: "{{ workshop_abbrev }}-{{ workshop_prefix }}-win-sg"
     region: "{{ region }}"
     instance_type: "{{ win_instance_type }}"
-    image: "{{ windows_ami.stdout if auto_ami == true else regions[region][win_ver].ami }}"
+    image_id: "{{ windows_ami.stdout if auto_ami == true else regions[region][win_ver].ami }}"
     vpc_subnet_id: "{{ ec2_subnet.subnet.id }}"
     user_data: "{{ lookup('file', '{{ winrm_path }}') }}"
     wait: true
-    instance_tags:
+    tags:
       Name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-win"
       username: "{{ local_user }}"
       workshop_prefix: "{{ workshop_prefix }}"
       win: "{{ workshop_abbrev }}-{{ workshop_prefix }}"
     exact_count: "{{ win_count }}"
-    count_tag: win
+    filters:
+      tag-key: win
+      key-name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-key"
+      instance-state-name: pending
+      instance-state-name: running
   register: ec2_win
+  when:  win_count is defined and win_count|int > 0
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_rhel_admin
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_rhel
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_tower_rhel
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_win
 
 #- name: write created host data to files
@@ -422,135 +455,144 @@
 #---------------------------------------------------
 
 - name: wait for SSH to answer on all hosts
-  wait_for:
+  ansible.builtin.wait_for:
     port: 22
-    host: "{{ item.public_ip }}"
+    host: "{{ item.public_ip_address }}"
     timeout: 300
-  with_items: "{{ ec2_rhel.tagged_instances }}"
-
-- name: add RHEL hosts to groups
-  add_host:
-    name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-{{ item.id }}"
-    ansible_ssh_host: "{{ item.public_ip }}"
-    groups: rhel_nodes
-  with_items: "{{ ec2_rhel.tagged_instances }}"
-
-- name: add IP addresses to inventory
-  lineinfile:
-    path: "{{ inventory_working_dir }}/hosts"
-    regex: "^node-{{ item.ami_launch_index }}.{{ workshop_prefix }}.{{ domain_name }}"
-    line: "node-{{ item.ami_launch_index }}.{{ workshop_prefix }}.{{ domain_name }} ansible_ssh_host={{ item.public_ip }}"
   with_items: "{{ ec2_rhel.instances }}"
 
-- debug:
-    msg: "Create DNS record admin.{{ workshop_prefix }}.{{ domain_name }} pointing to {{ item.dns_name }}"
-  loop: "{{ ec2_rhel_admin.instances }}"
+- name: add RHEL hosts to groups
+  ansible.builtin.add_host:
+    name: "{{ workshop_abbrev }}-{{ workshop_prefix }}-rhel-{{ item.instance_id }}"
+    ansible_ssh_host: "{{ item.public_ip_address }}"
+    groups: rhel_nodes
+  loop: "{{ ec2_rhel.instances|flatten(levels=1) }}"
+
+- name: add IP addresses to inventory
+  ansible.builtin.lineinfile:
+    path: "{{ inventory_working_dir }}/hosts"
+    regex: "^node-{{ item.ami_launch_index }}.{{ workshop_prefix }}.{{ domain_name }}"
+    line: "node-{{ item.ami_launch_index }}.{{ workshop_prefix }}.{{ domain_name }} ansible_ssh_host={{ item.public_ip_address }}"
+  loop: "{{ ec2_rhel.instances|flatten(levels=1) }}"
+
+- ansible.builtin.debug:
+    msg: "Create DNS record admin.{{ workshop_prefix }}.{{ domain_name }} pointing to {{ item.public_dns_name }}"
+  loop: "{{ ec2_rhel_admin.instances|flatten(levels=1) }}"
+  when: ec2_rhel_admin is defined
 
 - name: Create DNS records for RHEL admin
-  route53:
+  amazon.aws.route53:
     zone: "{{ domain_name }}"
     type: "CNAME"
     ttl: "300"
     record: "admin.{{ workshop_prefix }}.{{ domain_name }}"
-    value: "{{ item.dns_name }}"
+    value: "{{ item.public_dns_name }}"
 #    wait: yes
     overwrite: "{{ force_dns }}"
     state: present
-  loop: "{{ ec2_rhel_admin.instances }}"
+  loop: "{{ ec2_rhel_admin.instances|flatten(levels=1) }}"
+  when: ec2_rhel_admin is defined
 
 - name: Create DNS records for RHEL
-  route53:
+  amazon.aws.route53:
     zone: "{{ domain_name }}"
     type: "CNAME"
     ttl: "300"
     record: "node-{{ item.ami_launch_index }}.{{ workshop_prefix }}.{{ domain_name }}"
-    value: "{{ item.dns_name }}"
+    value: "{{ item.public_dns_name }}"
 #    wait: yes
     overwrite: "{{ force_dns }}"
     state: present
-  loop: "{{ ec2_rhel.instances }}"
+  loop: "{{ ec2_rhel.instances|flatten(levels=1) }}"
 #  ignore_errors: true
   when: workshop != "container_security"
 
 - name: Create DNS records for RHEL (container security)
-  route53:
+  amazon.aws.route53:
     zone: "{{ domain_name }}"
     type: "CNAME"
     ttl: "300"
     record: "{{ dns_name_list['stdout_lines'][ansible_loop.index0] }}"
-    value: "{{ item.dns_name }}"
+    value: "{{ item.public_dns_name }}"
     overwrite: yes
 #    wait: yes
     state: present
-  loop: "{{ ec2_rhel.instances }}"
+  loop: "{{ ec2_rhel.instances|flatten(levels=1) }}"
   loop_control:
     extended: yes
 #  ignore_errors: true
   when: workshop == "container_security"
 
 - name: Create DNS records for RHEL bastions (container security)
-  route53:
+  amazon.aws.route53:
     zone: "{{ domain_name }}"
     type: "CNAME"
     ttl: "300"
 #    record: "{{ workshop_prefix }}.bastion.{{ item.ami_launch_index }}.{{ domain_name }}"
     record: "bastion-{{ item.ami_launch_index }}.{{ workshop_prefix }}.{{ domain_name }}"
-    value: "{{ item.dns_name }}"
+    value: "{{ item.public_dns_name }}"
     overwrite: yes
 #    wait: yes
     state: present
-  loop: "{{ ec2_bastion_rhel.instances }}"
+  loop: "{{ ec2_bastion_rhel.instances|flatten(levels=1) }}"
   when: workshop == "container_security"
 
 - name: Create DNS records for RHEL Towers
-  route53:
+  amazon.aws.route53:
     zone: "{{ domain_name }}"
     type: "CNAME"
     ttl: "300"
     record: "tower-{{ item.ami_launch_index }}.{{ workshop_prefix }}.{{ domain_name }}"
-    value: "{{ item.dns_name }}"
+    value: "{{ item.public_dns_name }}"
 #    wait: yes
     overwrite: "{{ force_dns }}"
     state: present
-  loop: "{{ ec2_tower_rhel.instances }}"
-  when: tower_rhel_count is defined
+  loop: "{{ ec2_tower_rhel.instances|flatten(levels=1) }}"
+#  when: ec2_tower_rhel is defined
+  when: tower_rhel_count is defined and tower_rhel_count|int > 0
 
 #---------------------------------------------------
 #  Windows
 #---------------------------------------------------
 
 - name: wait for WinRM to answer on all hosts
-  wait_for:
+  ansible.builtin.wait_for:
     port: 5986
-    host: "{{ item.public_ip }}"
+    host: "{{ item.public_ip_address }}"
     timeout: 300
-  with_items: "{{ ec2_win.tagged_instances }}"
+  with_items: "{{ ec2_win.instances|flatten(levels=1) }}"
+#  when: ec2_win is defined
+  when:  win_count is defined and win_count|int > 0
 
 - name: add Windows hosts to groups
-  add_host:
-    name: "{{ workshop_abbrev }}-{{ workshop_prefix}}-win-{{ item.id }}"
-    ansible_ssh_host: "{{ item.public_ip }}"
+  ansible.builtin.add_host:
+    name: "{{ workshop_abbrev }}-{{ workshop_prefix}}-win-{{ item.instance_id }}"
+    ansible_ssh_host: "{{ item.public_ip_address }}"
     groups: win_nodes
-  with_items: "{{ ec2_win.tagged_instances }}"
+  with_items: "{{ ec2_win.instances|flatten(levels=1) }}"
+#  when: ec2_win is defined
+  when:  win_count is defined and win_count|int > 0
 
 - name: Create DNS records for Windows
-  route53:
+  amazon.aws.route53:
     zone: "{{ domain_name }}"
     type: "CNAME"
     ttl: "300"
     record: "win2016-{{ item.ami_launch_index }}.{{ workshop_prefix }}.{{ domain_name }}"
-    value: "{{ item.dns_name }}"
+    value: "{{ item.public_dns_name }}"
 #    wait: yes
     overwrite: "{{ force_dns }}"
     state: present
-  loop: "{{ ec2_win.instances }}"
+  loop: "{{ ec2_win.instances|flatten(levels=1) }}"
+#  when: ec2_win is defined
+  when:  win_count is defined and win_count|int > 0
 #  ignore_errors: true
 
 #---------------------------------------------------
 #  Ansible Hosts Creation
 #---------------------------------------------------
 - name: Template Ansible Hosts File
-  template:
+  ansible.builtin.template:
     dest: "{{ inventory_working_dir }}/hosts"
     src: "hosts.j2"
   when: execution is defined

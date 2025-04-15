@@ -11,9 +11,9 @@
   register: ansible_tower_pod
 
 - name: Review results
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_tower_pod_result: "{{ ansible_tower_pod | json_query('resources[*]') | first | default('') }}"
 
 - name: Deploy Ansible Tower
-  include: deploy.yml
+  ansible.builtin.include: deploy.yml
   when: ansible_tower_pod_result == ''

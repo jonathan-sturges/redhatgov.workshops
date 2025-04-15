@@ -1,5 +1,5 @@
 # file: roles/graphical/handlers/main.yml
 ---
 - name: colord
-  service: name=colord state=restarted
+  ansible.builtin.service: name=colord state=restarted
 ...

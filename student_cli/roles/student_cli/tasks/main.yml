@@ -1,6 +1,6 @@
 ---
 - name: Install dependencies
-  yum: 
+  ansible.builtin.yum: 
     name: "{{ item }}"
     state: present
   with_items:
@@ -12,7 +12,7 @@
   become: yes
   environment:
     PATH: "{{ ansible_env.PATH }}:/home/{{ system_user }}/oc"
-  copy:
+  ansible.builtin.copy:
     dest: "/tmp/"
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
@@ -20,7 +20,7 @@
     src: "oc-3.5.5.31-linux.tar.gz" 
 
 - name: Extract oc Client
-  unarchive: 
+  ansible.builtin.unarchive: 
     remote_src: true
     dest: /usr/bin
     src: /tmp/oc-3.5.5.31-linux.tar.gz

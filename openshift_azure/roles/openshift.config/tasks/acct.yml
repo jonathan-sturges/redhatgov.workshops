@@ -13,11 +13,11 @@
 #  shell: oc adm --config=/etc/origin/master/admin.kubeconfig policy add-cluster-role-to-user cluster-admin {{ openshift_cluster_admin_username }}
 
 - name: Create users for OpenShift web interface
-  shell: "htpasswd -b /etc/origin/master/htpasswd user{{ item }} {{ workshop_password }}"
+  ansible.builtin.shell: "htpasswd -b /etc/origin/master/htpasswd user{{ item }} {{ workshop_password }}"
   with_sequence: count={{ workshop_user_count }}
 
 - name: Create users for shell/OC client access
-  user:
+  ansible.builtin.user:
     name:      "user{{ item }}"
     password:  "{{ workshop_password |password_hash('sha512') }}"
     state:     present

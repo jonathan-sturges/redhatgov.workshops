@@ -1,6 +1,6 @@
 ---
 - name: Send email to students with inventory attached
-  sendgrid:
+  community.general.sendgrid:
     api_key:       "{{ sendgrid_api_key | default(omit) }}"
     # username:    "{{ sendgrid_user | default(omit) }}"
     # password:    "{{ sendgrid_pass | default(omit) }}"

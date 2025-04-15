@@ -2,7 +2,7 @@
 ---
 
 - name: Install base packages
-  yum:
+  ansible.builtin.yum:
     name: "{{ rhel_base_pkgs }}"
     state: present
   async: 10800
@@ -10,7 +10,7 @@
   register: rhel_base_pkg_status
 
 - name: 'Check on base package install ...'
-  async_status: jid={{ rhel_base_pkg_status.ansible_job_id }}
+  ansible.builtin.async_status: jid={{ rhel_base_pkg_status.ansible_job_id }}
   register: job_result
   until: job_result.finished
   delay: 30
@@ -18,7 +18,7 @@
 
 
 - name: Update the system to the latest packages
-  yum:
+  ansible.builtin.yum:
     name: "*"
     state: latest
   async: 10800
@@ -26,14 +26,14 @@
   register: rhel_upgrade_status
 
 - name: 'Check on latest package update ...'
-  async_status: jid={{ rhel_upgrade_status.ansible_job_id }}
+  ansible.builtin.async_status: jid={{ rhel_upgrade_status.ansible_job_id }}
   register: job_result
   until: job_result.finished
   delay: 30
   retries: 720
 
 - name: Install OpenShift packages
-  yum:
+  ansible.builtin.yum:
     name: "{{ rhel_ose_pkgs }}"
     state: present
   async: 10800
@@ -41,7 +41,7 @@
   register: install_rhocp_packages_status
 
 - name: 'Check on rhocp packages install ...'
-  async_status: jid={{ install_rhocp_packages_status.ansible_job_id }}
+  ansible.builtin.async_status: jid={{ install_rhocp_packages_status.ansible_job_id }}
   register: job_result
   until: job_result.finished
   delay: 30
@@ -52,24 +52,24 @@
 #  command: atomic-openshift-excluder unexclude
 
 - name: Eanble insecure registry
-  shell: sed -i '/OPTIONS=.*/c\OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/16 --log-opt max-size=1M --log-opt max-file=3"' /etc/sysconfig/docker
+  ansible.builtin.shell: sed -i '/OPTIONS=.*/c\OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/16 --log-opt max-size=1M --log-opt max-file=3"' /etc/sysconfig/docker
 
 - name: Prepare additional block device
-  shell: echo -e "WIPE_SIGNATURES=true\nDEVS={{ os_docker_block_device }}\nVG={{ os_docker_volume_group }}" >> /etc/sysconfig/docker-storage-setup
+  ansible.builtin.shell: echo -e "WIPE_SIGNATURES=true\nDEVS={{ os_docker_block_device }}\nVG={{ os_docker_volume_group }}" >> /etc/sysconfig/docker-storage-setup
 
 - name: Create 'docker-pool' logical volume
-  command: docker-storage-setup
+  ansible.builtin.command: docker-storage-setup
 
 - name: Reboot the host
-  reboot:
+  ansible.builtin.reboot:
 
 - name: Start docker
-  service: name=docker state=started enabled=yes
+  ansible.builtin.service: name=docker state=started enabled=yes
 
 - name: get EC2 Facts
   action: ec2_metadata_facts
 
-- debug: var=hostvars
+- ansible.builtin.debug: var=hostvars
 
 - name: Template inventory file to host
-  template: dest={{ default_home }}/inventory_ose  src=inventory_ose.j2
+  ansible.builtin.template: dest={{ default_home }}/inventory_ose  src=inventory_ose.j2

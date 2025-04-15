@@ -1,8 +1,8 @@
 # file: roles/subscription_manager/tasks/main.yml
 ---
 # Red Hat Cloud Access
-- include: cloud_access.yml
+- ansible.builtin.include: cloud_access.yml
 
 # Subscribe machines via username & password
 # or activation keys
-- include: subscribe.yml
+- ansible.builtin.include: subscribe.yml

@@ -23,7 +23,7 @@
 #---------------------------------------------------
 - name: Import keys (rhel 6)
 #  shell: rpmkeys --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
-  rpm_key:
+  ansible.builtin.rpm_key:
     state: present
     key: "{{ item }}"
   with_items:
@@ -34,7 +34,7 @@
     - rhel
 
 - name: Import keys (rhel 7+)
-  shell: rpmkeys --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+  ansible.builtin.shell: rpmkeys --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
 # DISABLED BECAUSE IT IS SLOW, ACROSS MANY NODES
 #  rpm_key:
 #    state: present
@@ -49,53 +49,53 @@
 # Subscribe to RHN
 #---------------------------------------------------
 - name: Check RHN subscription status
-  command: subscription-manager status
+  ansible.builtin.command: subscription-manager status
   register: sm_result
   ignore_errors: True
   when: not cloud_access
   tags:
     - rhel
 
-- debug:
+- ansible.builtin.debug:
     var: cloud_access
 
-- debug:
+- ansible.builtin.debug:
     var: rhsm_activationkey
 
-- debug:
+- ansible.builtin.debug:
     var: rhsm_org_id
 
-- debug:
+- ansible.builtin.debug:
     var: username
 
-- debug:
+- ansible.builtin.debug:
     var: password
 
-- debug:
+- ansible.builtin.debug:
     var: pool_id
 
-- debug:
+- ansible.builtin.debug:
     var: cloud_access
 
-- debug:
+- ansible.builtin.debug:
     var: sm_result
 
 - name: Remove RHUI client (RHEL 6)
-  package:
+  ansible.builtin.package:
     name: rh-amazon-rhui-client
     state: absent
   when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '6'
 
 
 - name: Remove RHUI client (RHEL 8)
-  package:
+  ansible.builtin.package:
     name: rh-amazon-rhui-client
     state: absent
   when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
 
 - name: Subscribe to RHSM via activation key / org id
   block:
-    - redhat_subscription:
+    - community.general.redhat_subscription:
         activationkey: "{{ rhsm_activationkey }}"
         org_id: "{{ rhsm_org_id }}"
         force_register: true
@@ -103,7 +103,7 @@
       register: actkey_result
   rescue:
     - name: Retrying subscription
-      redhat_subscription:
+      community.general.redhat_subscription:
         activationkey: "{{ rhsm_activationkey }}"
         org_id: "{{ rhsm_org_id }}"
         force_register: true
@@ -115,7 +115,7 @@
 
 - name: Subscribe to RHSM via username/password/pool_id
   block:
-    - redhat_subscription:
+    - community.general.redhat_subscription:
         username: "{{ username }}"
         password: "{{ password }}"
         pool: "{{ pool_id }}"
@@ -123,7 +123,7 @@
         state: present
   rescue:
     - name: Retrying subscription
-      redhat_subscription:
+      community.general.redhat_subscription:
         username: "{{ username }}"
         password: "{{ password }}"
         pool: "{{ pool_id }}"
@@ -137,19 +137,19 @@
 # Add Required Repositories
 #---------------------------------------------------
 - name: RHEL 8 tasks
-  import_tasks: repos-rhel8.yml
+  ansible.builtin.import_tasks: repos-rhel8.yml
   when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8' and beta|default(False)==False
 
 - name: RHEL 8 beta tasks
-  import_tasks: repos-rhel8beta.yml
+  ansible.builtin.import_tasks: repos-rhel8beta.yml
   when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8' and beta|default(False)==True
 
 - name: RHEL 7 tasks
-  import_tasks: repos-rhel7.yml
+  ansible.builtin.import_tasks: repos-rhel7.yml
   when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '7'
 
 - name: RHEL 6 tasks
-  import_tasks: repos-rhel6.yml
+  ansible.builtin.import_tasks: repos-rhel6.yml
   when: not cloud_access and ansible_distribution == 'RedHat' and ansible_distribution_major_version == '6'
 
 ...

@@ -4,21 +4,21 @@
 
 - name: Name for get_url module.
   become: yes
-  get_url: 
+  ansible.builtin.get_url: 
     dest: "/bin"
     url:  "https://github.com/openshift/origin/releases/download/v1.5.1/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit.tar.gz"
     validate_certs: false
 
 - name: Unarchive the oc binary
   become: yes
-  unarchive:
+  ansible.builtin.unarchive:
     src: "/bin/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit.tar.gz"
     dest: "/bin"
     remote_src: True
 
 - name: Move OC command
   become: yes
-  command: mv oc .. chdir=/bin/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit   
+  ansible.builtin.command: mv oc .. chdir=/bin/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit   
 
 # - name: Copy over oc 1.5.0 for ec2-user/vagrant
 #   become: yes

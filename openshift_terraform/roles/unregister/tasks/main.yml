@@ -11,7 +11,7 @@
 #   ignore_errors: True
 
 - name: Unsubscribe RHN
-  redhat_subscription:
+  community.general.redhat_subscription:
       state: absent
 #  when: sm_result.rc == 0
 

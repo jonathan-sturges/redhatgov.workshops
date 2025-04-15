@@ -3,7 +3,7 @@
 
 #-------------------------------------------------------
 - name: Generate Self Signed Certs
-  command: >
+  ansible.builtin.command: >
     openssl req -new
       -x509
       -nodes
@@ -19,7 +19,7 @@
 
 - name: Set permissions on SSL certs
   become: yes
-  file: 
+  ansible.builtin.file: 
     path:    "/home/{{ system_user }}/.ssh/{{ item }}"
     group:   "{{ system_user }}"  
     owner:   "{{ system_user }}"
@@ -30,7 +30,7 @@
 
 - name: Update SSH Config
   become: yes
-  copy:
+  ansible.builtin.copy:
     src: sshd_config
     dest: "/etc/ssh/sshd_config"
     group: root
@@ -43,7 +43,7 @@
 
 - name: Install yarn repository
   become: yes
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: yarn
     description: "Yarn repository"
     baseurl: 'https://dl.yarnpkg.com/rpm/'
@@ -52,7 +52,7 @@
 
 - name: Install required packages
   become: yes
-  yum:
+  ansible.builtin.yum:
     name:
     - yarn
     - git
@@ -68,25 +68,25 @@
 #    creates: /usr/lib/node_modules/wetty/bin/wetty.js
 
 - name: Pull wetty from GitHub
-  git:
+  ansible.builtin.git:
     repo: 'https://github.com/butlerx/wetty.git'
     dest: wetty
 
 - name: Install Python 2 (RHEL 8)
-  yum:
+  ansible.builtin.yum:
     name: python2
     state: present
   when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
 
 - name: Build wetty (RHEL 7)
-  shell: yarn && yarn build
+  ansible.builtin.shell: yarn && yarn build
   args:
     chdir: "wetty"
     creates: "dist/client"
   when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '7'
 
 - name: Build wetty (RHEL 8)
-  shell: export PYTHON=/usr/bin/python2 ; yarn && yarn build
+  ansible.builtin.shell: export PYTHON=/usr/bin/python2 ; yarn && yarn build
   args:
     chdir: "wetty"
     creates: "dist/client"
@@ -94,7 +94,7 @@
 
 - name: Install wetty
   become: true
-  command: yarn global add wetty
+  ansible.builtin.command: yarn global add wetty
   args:
     chdir: "/home/{{ system_user }}/wetty"
 
@@ -103,7 +103,7 @@
 #-------------------------------------------------------
 - name: Install the patch package, if not already present
   become: yes
-  package:
+  ansible.builtin.package:
     name: patch
     state: latest
 
@@ -119,14 +119,14 @@
 #-------------------------------------------------------
 - name: Copy cert.pem to Wetty dir
   become: yes
-  command: cp cert.pem /home/{{ system_user }}/.ssh/ chdir="/etc/letsencrypt/live/{{ workshop_prefix | lower }}.{{ hostvars[inventory_hostname]['ec2_tag_Index'] }}.{{ domain_name }}/"  
+  ansible.builtin.command: cp cert.pem /home/{{ system_user }}/.ssh/ chdir="/etc/letsencrypt/live/{{ workshop_prefix | lower }}.{{ hostvars[inventory_hostname]['ec2_tag_Index'] }}.{{ domain_name }}/"  
   args:
     creates: /home/{{ system_user }}/.ssh/cert.pem
   when: letsencrypt
 
 - name: Copy privkey.pem to Wetty dir
   become: yes
-  command: cp privkey.pem /home/{{ system_user }}/.ssh/ chdir="/etc/letsencrypt/live/{{ workshop_prefix | lower }}.{{ hostvars[inventory_hostname]['ec2_tag_Index'] }}.{{ domain_name }}/" 
+  ansible.builtin.command: cp privkey.pem /home/{{ system_user }}/.ssh/ chdir="/etc/letsencrypt/live/{{ workshop_prefix | lower }}.{{ hostvars[inventory_hostname]['ec2_tag_Index'] }}.{{ domain_name }}/" 
   args:
     creates: /home/{{ system_user }}/.ssh/privkey.pem
   when: letsencrypt
@@ -134,7 +134,7 @@
 # SYSTEMD
 - name: Template Systemd Service File for Wetty
   become: yes
-  template:
+  ansible.builtin.template:
     src:   "wetty.service.j2"
     dest:  "/etc/systemd/system/wetty.service"
     group: root 
@@ -148,18 +148,18 @@
 
 - name: check to see if firewalld is installed
   become: yes
-  command: rpm -q firewalld
+  ansible.builtin.command: rpm -q firewalld
   register: rf_result
   ignore_errors: True
 
 - name: check to see if firewalld is running
-  command: service firewalld status
+  ansible.builtin.command: service firewalld status
   register: rfr_result
   ignore_errors: True
 
 - name: check to see if iptables is running
   become: yes
-  command: service iptables status
+  ansible.builtin.command: service iptables status
   register: ri_result
   ignore_errors: True
 
@@ -179,7 +179,7 @@
 
 - name: Open port in IPtables firewall
   become: yes
-  iptables:
+  ansible.builtin.iptables:
     action: append
     chain: OS_FIREWALL_ALLOW
     destination_port: 8888
@@ -194,7 +194,7 @@
 # iptables-save > /etc/sysconfig/iptables
 # ip6tables-save > /etc/sysconfig/ip6tables
 - name: Append IPtables rule to config file
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/sysconfig/iptables
     insertbefore: "^COMMIT$"
     line: "-A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m udp --dport 8888 -j ACCEPT"
@@ -208,7 +208,7 @@
 #-------------------------------------------------------
 - name: Create SELinux dir
   become: yes
-  file: 
+  ansible.builtin.file: 
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
     mode:  0700
@@ -217,7 +217,7 @@
 
 - name: Copy over SELinux modules for Wetty
   become: yes
-  copy:
+  ansible.builtin.copy:
     src:   "{{ item }}"
     dest:  "/home/{{ system_user }}/.selinux"
     group: "{{system_user}}"
@@ -230,7 +230,7 @@
 
 - name: Update SELinux for Wetty
   become: yes
-  command: semodule -i wetty.pp chdir=/home/{{ system_user }}/.selinux
+  ansible.builtin.command: semodule -i wetty.pp chdir=/home/{{ system_user }}/.selinux
   notify: wetty
   when: result.changed
 
@@ -239,7 +239,7 @@
 ###########################################################
 - name: enable and start wetty service
   become: yes
-  service:
+  ansible.builtin.service:
     name: wetty
     enabled: yes
     state: started
@@ -270,7 +270,7 @@
 # verify that wetty is running
 #-------------------------------------------------------
 - name: Verify that wetty is listening
-  shell: ncat -v -C --ssl localhost 8888 < /dev/null
+  ansible.builtin.shell: ncat -v -C --ssl localhost 8888 < /dev/null
   register: wetty_status
   changed_when: "wetty_status.rc != 0"
 

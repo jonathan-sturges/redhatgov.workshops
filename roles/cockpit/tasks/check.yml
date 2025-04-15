@@ -2,7 +2,7 @@
 
 - name: check to see if cockpit is listening
   become: no
-  uri:
+  ansible.builtin.uri:
     url: "https://{{ inventory_hostname }}:9090/system"
     url_username: "{{ system_user }}"
     url_password: "{{ workshop_password }}"
@@ -21,7 +21,7 @@
 
 - name: check to see if cockpit is listening (again)
   become: no
-  uri:
+  ansible.builtin.uri:
     url: "https://{{ inventory_hostname }}:9090/system"
     url_username: "{{ system_user }}"
     url_password: "{{ workshop_password }}"

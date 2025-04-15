@@ -2,7 +2,7 @@
 #  Deployment directory creation
 #---------------------------------------------------
 - name: Make temporary location to run deployment
-  file:
+  ansible.builtin.file:
     path: "{{ deploy_working_dir }}"
     state: directory
 
@@ -10,7 +10,7 @@
 #  Template directory creation
 #---------------------------------------------------
 - name: Make temporary location to run inventory
-  file:
+  ansible.builtin.file:
     path: "{{ inventory_working_dir }}"
     state: directory
 
@@ -18,7 +18,7 @@
 #  EC2 INI Creation
 #---------------------------------------------------
 - name: Template EC2 INI File
-  template:
+  ansible.builtin.template:
     dest: "{{ inventory_working_dir }}/ec2.ini"
     src: "ec2.ini.j2"
   when: execution is defined
@@ -27,7 +27,7 @@
 #  Ansible hostlist
 #---------------------------------------------------
 - name: Touch to make sure hostlist exists
-  file:
+  ansible.builtin.file:
     path: "{{ deploy_working_dir }}/hostlist"
     state: touch
     mode: '0644'
@@ -36,30 +36,30 @@
 #  SSH Key
 #---------------------------------------------------
 - name: Create EC2 keypair
-  ec2_key:
+  amazon.aws.ec2_key:
     name: "{{ openshift_cluster_name }}-{{ workshop_prefix }}-key"
     region: "{{ region }}"
     state: "{{ aws_state }}"
   register: ec2_key
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_key
 
 - name: Write ssh private key
-  copy:
+  ansible.builtin.copy:
     content: "{{ ec2_key.key.private_key }}\n"
     dest: "{{ ssh_key_path }}"
     mode: 0400
   when: ec2_key.changed
 
 - name: Write ssh public key
-  openssl_publickey:
+  community.crypto.openssl_publickey:
     path: "{{ ssh_key_path }}.pub"
     privatekey_path: "{{ ssh_key_path }}"
   when: ec2_key.changed
 
 - name: template values in operators
-  template:
+  ansible.builtin.template:
     src: "sshkey.yaml.j2"
     dest: "{{ openshift_build_path }}/sshkey.yaml"
   when: ec2_key.key.private_key is defined
@@ -71,20 +71,20 @@
   when: ec2_key.key.private_key is defined
 
 - name: create user sshkey secret template
-  template:
+  ansible.builtin.template:
     src: "sshkey-user.yaml.j2"
     dest: "{{ openshift_build_path }}/sshkey-user{{ item }}.yaml"
   when: ec2_key.key.private_key is defined
   with_sequence: start=1 count="{{ openshift_user_count }}"
 
 - name: Template Ansible Hosts File
-  template:
+  ansible.builtin.template:
     dest: "{{ inventory_working_dir }}/hosts"
     src: hosts.j2
     mode: '644'
 
 - name: Create VPC
-  ec2_vpc_net:
+  amazon.aws.ec2_vpc_net:
     name: "{{ openshift_cluster_name }}-{{ workshop_prefix }}-vpc"
     region: "{{ region }}"
     cidr_block: "10.0.0.0/16"
@@ -97,11 +97,11 @@
     state: "{{ aws_state }}"
   register: ec2_vpc
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_vpc
 
 - name: Create VPC internet gateway
-  ec2_vpc_igw:
+  amazon.aws.ec2_vpc_igw:
     region: "{{ region }}"
     vpc_id: "{{ ec2_vpc.vpc.id }}"
     state: "{{ aws_state }}"
@@ -112,10 +112,10 @@
       workshop_prefix: "{{ workshop_prefix }}"
   register: ec2_igw
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_igw
 
-- set_fact:
+- ansible.builtin.set_fact:
     ports_list_of_dicts: |
       {% set res = [] -%}
       {% if ports.tcp != None %}
@@ -134,7 +134,7 @@
       {%- endif %}
       {{ res }}
 
-- debug:
+- ansible.builtin.debug:
     var: ports_list_of_dicts
 
 - name: Create RHEL security group
@@ -153,11 +153,11 @@
     state: "{{ aws_state }}"
   register: result
 
-- debug:
+- ansible.builtin.debug:
     var: result
 
 - name: Create public subnet
-  ec2_vpc_subnet:
+  amazon.aws.ec2_vpc_subnet:
     cidr: "10.0.2.0/24"
     region: "{{ region }}"
     vpc_id: "{{ ec2_vpc.vpc.id }}"
@@ -170,11 +170,11 @@
     state: "{{ aws_state }}"
   register: ec2_subnet
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_subnet
 
 - name: Create VPC route table
-  ec2_vpc_route_table:
+  amazon.aws.ec2_vpc_route_table:
     region: "{{ region }}"
     vpc_id: "{{ ec2_vpc.vpc.id }}"
     subnets:
@@ -191,5 +191,5 @@
     state: "{{ aws_state }}"
   register: ec2_route
 
-- debug:
+- ansible.builtin.debug:
     var: ec2_route

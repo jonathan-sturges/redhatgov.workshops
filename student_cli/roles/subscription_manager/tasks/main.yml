@@ -6,7 +6,7 @@
 #---------------------------------------------------
 
 - name: Add DNS entries for subscription
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/hosts
     block: |
       209.132.183.44   xmlrpc.rhn.redhat.com
@@ -26,7 +26,7 @@
 #---------------------------------------------------
 
 - name: Import keys
-  shell: rpmkeys --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+  ansible.builtin.shell: rpmkeys --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
 # DISABLED BECAUSE IT IS SLOW, ACROSS MANY NODES
 #  rpm_key:
 #    state: present
@@ -43,7 +43,7 @@
 #---------------------------------------------------
 
 - name: Check RHN subscription status
-  command: subscription-manager status
+  ansible.builtin.command: subscription-manager status
   register: sm_result
   ignore_errors: True
   when: sub
@@ -59,7 +59,7 @@
 #  when: sm_result.rc != 0 and sub
 
 - name: Subscribe to RHSM
-  redhat_subscription:
+  community.general.redhat_subscription:
     state: present
     username: "{{ username }}"
     password: "{{ password }}"
@@ -74,7 +74,7 @@
 
 - name: Check to see if requisite repos are already enabled
   become: yes
-  shell: subscription-manager repos --list-enabled | egrep 'rhel-7-server-extras-rpms|rhel-7-server-optional-rpms|rhel-7-server-rpms' | wc -l
+  ansible.builtin.shell: subscription-manager repos --list-enabled | egrep 'rhel-7-server-extras-rpms|rhel-7-server-optional-rpms|rhel-7-server-rpms' | wc -l
   register: smr_result
   ignore_errors: True
   when: repos
@@ -82,13 +82,13 @@
     - rhel
 
 - name: Disable all repos by default
-  command: subscription-manager repos --disable "*"
+  ansible.builtin.command: subscription-manager repos --disable "*"
   when: repos and smr_result.stdout != "3"
   tags:
     - rhel
 
 - name: Enable the requisite rhel7 repos
-  shell: subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-optional-rpms" #--enable="rhel-7-server-ose-3.4-rpms"
+  ansible.builtin.shell: subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-optional-rpms" #--enable="rhel-7-server-ose-3.4-rpms"
   when: repos and smr_result.stdout != "3"
   tags:
     - rhel

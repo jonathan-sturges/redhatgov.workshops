@@ -1,16 +1,16 @@
 ---
 # tasks file for graphical
 - name: Gather package facts
-  package_facts:
+  ansible.builtin.package_facts:
     manager: auto
 
 - name: Gather service facts
-  service_facts:
+  ansible.builtin.service_facts:
 
 - name: RHEL 7 Tasks
   block:
   - name: Install GUI components (cloud access)
-    yum:
+    ansible.builtin.yum:
       name:
       - "@gnome-desktop"
       - "@x11"
@@ -24,7 +24,7 @@
     when: cloud_access
 
   - name: Install GUI components
-    yum:
+    ansible.builtin.yum:
       name:
       - "@gnome-desktop"
       - "@x11"
@@ -38,7 +38,7 @@
     when: not cloud_access
 
   - name: Install XRDP server and dependencies
-    yum:
+    ansible.builtin.yum:
       name:
       - "xrdp"
       - "xrdp-selinux"
@@ -53,7 +53,7 @@
   block:
 
   - name: Install GUI components and Xrdp build reqs on RHEL 8
-    command: yum -y install @graphical-server-environment tigervnc-server 'xorg-*' coreutils wget --skip-broken --disablerepo='rpmfusion-*'
+    ansible.builtin.command: yum -y install @graphical-server-environment tigervnc-server 'xorg-*' coreutils wget --skip-broken --disablerepo='rpmfusion-*'
     # currently, the group is not properly resolved, against RHUI, with yum
 #      yum:
 #        name:
@@ -71,7 +71,7 @@
 #        state: present
 
   - name: Install XRDP server and dependencies
-    yum:
+    ansible.builtin.yum:
       name:
       - "xrdp"
       - "xrdp-selinux"
@@ -159,7 +159,7 @@
 #        target: "install"
 
   - name: Install Xwrapper configuration
-    copy:
+    ansible.builtin.copy:
       dest: "/etc/X11/Xwrapper.config"
       src: "Xwrapper.config"
       mode: 0644
@@ -167,13 +167,13 @@
   when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
 
 - name: Install xrdp configuration
-  copy:
+  ansible.builtin.copy:
     dest: "/etc/xrdp/xrdp.ini"
     src: "xrdp.ini"
     mode: 0644
 
 - name: Create SELinux dir
-  file:
+  ansible.builtin.file:
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
     mode:  0700
@@ -181,7 +181,7 @@
     state: directory
 
 - name: Copy over SELinux modules for colord
-  copy:
+  ansible.builtin.copy:
     src:   "{{ item }}"
     dest:  "/home/{{ system_user }}/.selinux"
     group: "{{system_user}}"
@@ -193,7 +193,7 @@
   register: result
 
 - name: Copy over polikt config for colord
-  copy:
+  ansible.builtin.copy:
     src:   "02-allow-colord.rules"
     dest:  "/etc/polkit-1/rules.d/02-allow-colord.rules"
     group: "root"
@@ -201,7 +201,7 @@
     mode:  0644
 
 - name: Update SELinux for colord
-  command: semodule -i colord-add.pp chdir=/home/{{ system_user }}/.selinux
+  ansible.builtin.command: semodule -i colord-add.pp chdir=/home/{{ system_user }}/.selinux
   notify: colord
   when: result.changed
 
@@ -225,7 +225,7 @@
   block:
 
   - name: open XRDP port in iptables
-    iptables:
+    ansible.builtin.iptables:
       chain: INPUT
       protocol: tcp
       destination_port: 3389
@@ -233,7 +233,7 @@
     when: ansible_facts.services["firewalld.service"].state == "running"
 
 - name: Enable XRDP auto-start
-  service:
+  ansible.builtin.service:
     name: "xrdp"
     enabled: "yes"
     state: started

@@ -3,13 +3,13 @@
 
 - name: Install Atomic commmand
   become: yes
-  yum: 
+  ansible.builtin.yum: 
     name: atomic 
     state: present
 
 
 - name: Setup workshop directories
-  file:
+  ansible.builtin.file:
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
     mode:  0700
@@ -17,7 +17,7 @@
     state: directory 
 
 - name: Copy Scanner Files to Hosts. 
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: /home/{{ system_user }}/workshopfiles
     owner: "{{ system_user }}"

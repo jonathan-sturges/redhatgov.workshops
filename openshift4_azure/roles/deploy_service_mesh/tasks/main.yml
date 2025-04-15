@@ -2,18 +2,18 @@
 # tasks file for service-mesh
 
 - name: create namespace
-  k8s:
+  kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('file', 'servicemesh-namespace.yml') }}"
 
 - name: template values in operators
-  template:
+  ansible.builtin.template:
     src: "{{ item }}.yml.j2"
     dest: "{{ openshift_build_path }}/{{ item }}.yml"
   loop: "{{ servicemesh_operators }}"
 
 - name: install operators required for openshift service mesh
-  k8s:
+  kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', '{{ openshift_build_path }}/{{ item }}.yml') }}"
     namespace: "openshift-operators"
@@ -21,7 +21,7 @@
 
 # TODO: add output on each retry; if practical
 - name: make sure the operators are all installed
-  command: "{{ openshift_build_path }}/oc get clusterserviceversions -n openshift-operators -o custom-columns='PHASE:status.phase' --no-headers"
+  ansible.builtin.command: "{{ openshift_build_path }}/oc get clusterserviceversions -n openshift-operators -o custom-columns='PHASE:status.phase' --no-headers"
   register: servicemesh_operator_status
   changed_when: false
   vars:
@@ -39,6 +39,6 @@
   # servicemesh_operator_status.stdout_lines is not empty.
 
 - name: install istio service mesh control plane
-  k8s:
+  kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('file', 'istio-installation.yml') }}"

@@ -1,19 +1,19 @@
 ---
 # tasks file for code-server
 - name: gather facts
-  gather_facts:
+  ansible.builtin.gather_facts:
 
 - name: Gather package facts
-  package_facts:
+  ansible.builtin.package_facts:
     manager: auto
 
 - name: Gather service facts
-  service_facts:
+  ansible.builtin.service_facts:
 
 - name: Install dependencies
   block:
   - name: Ensure required packages exist
-    package:
+    ansible.builtin.package:
       name: "{{ item }}"
       state: latest
     with_items:
@@ -40,7 +40,7 @@
   block:
 
   - name: open code-server port in iptables
-    iptables:
+    ansible.builtin.iptables:
       chain: INPUT
       protocol: tcp
       destination_port: "{{ code_port }}"
@@ -48,25 +48,25 @@
     when: ansible_facts.packages["iptables"] is defined
 
 - name: create container build directory
-  file:
+  ansible.builtin.file:
     state: directory
     path: "~/build"
   become: no
 
 - name: push out container build file
-  template:
+  ansible.builtin.template:
     src: Dockerfile.j2
     dest: "~/build/Dockerfile"
   become: no
 
 - name: push out kubernetes deployment
-  copy:
+  ansible.builtin.copy:
     src: code-server.yml
     dest: "~/build/code-server.yml"
   become: no
 
 - name: Build a Docker formatted image
-  podman_image:
+  containers.podman.podman_image:
     name: code-server
     path: "~/build"
     build:

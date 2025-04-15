@@ -14,7 +14,7 @@
 
 - name: Make sure you have Git installed
   become: yes
-  yum:
+  ansible.builtin.yum:
     name:  "git"
     state: present
 
@@ -24,7 +24,7 @@
 
 - name: Name for git module.
   become: yes
-  git:
+  ansible.builtin.git:
     clone: yes
     dest: /root/jboss-openshift-templates
     repo: https://github.com/jboss-openshift/application-templates.git

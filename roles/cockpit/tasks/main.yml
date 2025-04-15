@@ -1,6 +1,6 @@
 ---
 
-- import_tasks: deploy.yml
-- import_tasks: check.yml
+- ansible.builtin.import_tasks: deploy.yml
+- ansible.builtin.import_tasks: check.yml
 
 ...

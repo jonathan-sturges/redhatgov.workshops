@@ -4,7 +4,7 @@
 
 - name: Install the awesome | jq (ec2-user)
   become: yes
-  copy: 
+  ansible.builtin.copy: 
     dest: "/usr/local/bin/jq"
     group: "{{ system_user }}"
     owner: "{{ system_user }}"
@@ -13,7 +13,7 @@
 
 - name: Install the awesome | jq (root)
   become: yes
-  copy: 
+  ansible.builtin.copy: 
     dest: "/bin/jq"
     group: "{{ system_user }}"
     owner: "{{ system_user }}"

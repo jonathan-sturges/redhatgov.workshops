@@ -3,7 +3,7 @@
 
 - name: Install Skopeo
   become: yes
-  yum:
+  ansible.builtin.yum:
     name: "{{ item }}"
     state: present
   with_items:

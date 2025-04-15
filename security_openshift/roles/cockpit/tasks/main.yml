@@ -7,7 +7,7 @@
 
 - name: Install Cockpit
   become: yes
-  yum: name="{{item}}" state=present
+  ansible.builtin.yum: name="{{item}}" state=present
   with_items: 
     - cockpit 
     - cockpit-docker
@@ -31,7 +31,7 @@
 #############################################################################################
 - name: Create Cockpit user
   become: yes
-  user:
+  ansible.builtin.user:
     name: cockpit
     shell: "/bin/zsh"
     state: present
@@ -41,7 +41,7 @@
     update_password: always
 
 - name: Add Cockpit User to /etc/sudoers
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/sudoers
     state: present
     insertafter: "NOPASSWD: ALL"

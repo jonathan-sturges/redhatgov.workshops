@@ -2,18 +2,18 @@
 # tasks file for codiad
 
 - name: Install Codiad package dependencies
-  package:
+  ansible.builtin.package:
     name: "{{ item }}"
     state: latest
   with_items: "{{ codiad_pkgs }}"
 
 - name: Get list of users
-  getent:
+  ansible.builtin.getent:
     database: passwd
   register: gp
 
 - name: Add Codiad users to nginx group
-  user:
+  ansible.builtin.user:
     name: "{{ item.name }}"
     append: yes
     groups:
@@ -23,7 +23,7 @@
   when: item.name in gp.ansible_facts.getent_passwd
 
 - name: Configure nginx to listen on port 8443 only
-  template:
+  ansible.builtin.template:
     backup: true
     dest: "/etc/nginx/{{ item.dest }}"
     src: "{{ item.src }}"
@@ -32,12 +32,12 @@
   - { src: "nginx.conf.j2", dest: "nginx.conf" }
 
 - name: Check to see if firewalld is enabled
-  command: systemctl is-enabled firewalld
+  ansible.builtin.command: systemctl is-enabled firewalld
   register: sif_result
   ignore_errors: True
 
 - name: Open firewall ports
-  firewalld:
+  ansible.posix.firewalld:
     immediate: true
     permanent: true
     port: "{{ codiad_port }}/tcp"
@@ -45,7 +45,7 @@
   when: sif_result.rc == 0
 
 - name: Create nginx cert storage
-  file:
+  ansible.builtin.file:
     state: directory
     dest: "/etc/pki/nginx/private"
     group:   "nginx"
@@ -53,7 +53,7 @@
     mode:    0750
 
 - name: Create nginx html directory
-  file:
+  ansible.builtin.file:
     state: directory
     dest: "{{ codiad_dir }}"
     group:   "root"
@@ -62,7 +62,7 @@
     setype: "httpd_sys_rw_content_t"
 
 - name: Copy certs to nginx storage
-  copy:
+  ansible.builtin.copy:
     remote_src: yes
     dest: "/etc/pki/nginx/{{ item.dest }}"
     src: "{{ item.src }}"
@@ -74,7 +74,7 @@
   - { src: "{{ codiad_ssl_key_src_file }}", dest: "private/{{ codiad_ssl_key_file }}" }
 
 - name: Clone Codiad from GitHub
-  git:
+  ansible.builtin.git:
     clone: yes
     repo: "https://github.com/Codiad/Codiad"
     dest: "{{ codiad_dir }}"
@@ -82,7 +82,7 @@
     version: "{{ codiad_version }}"
 
 - name: Set ownership and SELinux context on Codiad
-  file:
+  ansible.builtin.file:
     dest: "{{ item }}"
     state: directory
     recurse: yes
@@ -97,13 +97,13 @@
   - "{{ codiad_dir }}/workspace/default"
 
 - name: Configure PHP CGI
-  replace:
+  ansible.builtin.replace:
     dest: "/etc/php.ini"
     regexp: "^;cgi.fix_pathinfo=1"
     replace: "cgi.fix_pathinfo=0"
 
 - name: Configure PHP FPM
-  replace:
+  ansible.builtin.replace:
     dest: "/etc/php-fpm.d/www.conf"
     regexp: "{{ item.src }}"
     replace: "{{ item.dest }}"
@@ -115,18 +115,18 @@
   - { src: "^group =.*", dest: "group = nginx" }
 
 - name: Set permissions on Codiad workspace
-  file:
+  ansible.builtin.file:
     dest: "{{ codiad_dir }}/workspace"
     mode: "g+sw"
     recurse: yes
 
 - name: Set permissions on PHP sessions
-  file:
+  ansible.builtin.file:
     dest: "/var/lib/php/session"
     group: "nginx"
 
 - name: Configure Codiad defaults
-  template:
+  ansible.builtin.template:
     src: "config.php.j2"
     dest: "{{ codiad_dir }}/config.php"
     group: "nginx"
@@ -135,7 +135,7 @@
     setype: "httpd_sys_rw_content_t"
 
 - name: Configure Codiad data
-  template:
+  ansible.builtin.template:
     src: "{{ item }}.j2"
     dest: "{{ codiad_dir }}/data/{{ item }}"
     group: "nginx"
@@ -150,7 +150,7 @@
   - "users.php"
 
 - name: Start and enable nginx and php-fpm
-  service:
+  ansible.builtin.service:
     enabled: yes
     name: "{{ item }}"
     state: restarted

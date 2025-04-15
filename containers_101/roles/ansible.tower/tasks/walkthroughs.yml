@@ -3,7 +3,7 @@
 #--------------------------------------------------
 
 - name: Create directory for walkthrough scripts
-  file:
+  ansible.builtin.file:
     path: "/home/{{ system_user }}/walkthrough"
     state: directory
     owner: "{{ system_user }}"
@@ -72,7 +72,7 @@
   when: prep
 
 - name: Copy archive and extract scripts
-  unarchive:
+  ansible.builtin.unarchive:
     src: "/tmp/{{ inventory_hostname }}.tgz"
     dest: "/home/{{ system_user }}/walkthrough/"
     mode: 0755

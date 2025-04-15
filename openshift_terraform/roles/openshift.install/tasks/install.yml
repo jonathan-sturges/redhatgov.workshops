@@ -3,44 +3,44 @@
 
 - name: Curl get pip
   become: yes
-  get_url:
+  ansible.builtin.get_url:
     url: "https://bootstrap.pypa.io/get-pip.py"
     dest: "{{ default_home }}/get-pip.py"
 #  command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" chdir={{ default_home }}
 
 - name: Python install pip
   become: yes
-  command: python {{ default_home }}/get-pip.py
+  ansible.builtin.command: python {{ default_home }}/get-pip.py
   args:
     chdir: "{{ default_home }}"
 
 - name: Install passlib
   become: yes
-  pip:
+  ansible.builtin.pip:
     name: passlib
     state: present
 
 - name: Copy over key pair
-  copy:
+  ansible.builtin.copy:
     dest: "{{ default_ssh }}/{{ default_keypair }}"
     mode: 0400
     src:  "{{ terraform_working_dir }}/{{ default_keypair }}"
 
 - name: Touch a file, using symbolic modes to set the permissions (equivalent to 0644)
-  file:
+  ansible.builtin.file:
     path: "{{ default_ssh }}/config"
     state: touch
     mode: "u=rw,g=r,o=r"
 
 - name: Insert/update "Host" configuration block in ~/.ssh/config
-  blockinfile:
+  ansible.builtin.blockinfile:
     dest: "{{ default_ssh }}/config"
     block: |
       Host *
       IdentityFile ~/.ssh/{{ default_keypair }}
 
 - name: Add/remove file permissions
-  file:
+  ansible.builtin.file:
     path: "{{ default_ssh }}/config"
     state: touch
     mode: 0400
@@ -49,29 +49,29 @@
 #  shell: echo "ssh-agent = $(ssh-agent)"
 
 - name: Enable ssh-agent
-  shell: eval $(ssh-agent)
+  ansible.builtin.shell: eval $(ssh-agent)
 
 - name: Check to see if patch is needed to openshift-ansible
-  shell: rpm -q openshift-ansible
+  ansible.builtin.shell: rpm -q openshift-ansible
   register: osansible
 
 # see https://bugzilla.redhat.com/show_bug.cgi?id=1512793
 - name: Install patch to openshift-ansible-3.7.9-1.git.7.eedd332
   become: yes
-  patch:
+  ansible.posix.patch:
     src: openshift-ansible-3.7.9-1.git.7.eedd332.patch
     basedir: /usr/share/ansible/openshift-ansible
     strip: 1
   when: osansible.stdout == "openshift-ansible-3.7.9-1.git.7.eedd332.el7.noarch"
 
 - name: Check to see if patch is needed to openshift-ansible
-  shell: rpm -q openshift-ansible-roles
+  ansible.builtin.shell: rpm -q openshift-ansible-roles
   register: osansibleroles
 
 # Ensure patch package is installed (if needed)
 - name: Ensure patch package is installed
   become: yes
-  yum:
+  ansible.builtin.yum:
     name: patch
     state: present
   when: osansibleroles.stdout == "openshift-ansible-roles-3.7.23-1.git.0.bc406aa.el7.noarch"
@@ -79,7 +79,7 @@
 # see https://bugzilla.redhat.com/show_bug.cgi?id=1521218 – [RFE] Allow deploy logging with no-default storageclass
 - name: Install patch to openshift-ansible-roles-3.7.23-1.git.0.bc406aa
   become: yes
-  patch:
+  ansible.posix.patch:
     src: openshift-ansible-roles-3.7.23-1.git.0.bc406aa.aos_version.py.patch
     dest: /usr/share/ansible/openshift-ansible/roles/openshift_health_checker/library/aos_version.py
   when: osansibleroles.stdout == "openshift-ansible-roles-3.7.23-1.git.0.bc406aa.el7.noarch"
@@ -87,13 +87,13 @@
 # Allow for newer packages to be installed
 - name: Install patch to openshift-ansible-roles-3.7.23-1.git.0.bc406aa
   become: yes
-  patch:
+  ansible.posix.patch:
     src: openshift-ansible-roles-3.7.23-1.git.0.bc406aa.install_logging.yaml.patch
     dest: /usr/share/ansible/openshift-ansible/roles/openshift_logging/tasks/install_logging.yaml
   when: osansibleroles.stdout == "openshift-ansible-roles-3.7.23-1.git.0.bc406aa.el7.noarch"
 
 - name: Run advanced installation method (prerequisites)
-  shell: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory_ose /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml 2>&1 | sudo tee -a /var/log/openshift-install.pre && sudo touch /var/opt/.openshift-complete-pre
+  ansible.builtin.shell: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory_ose /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml 2>&1 | sudo tee -a /var/log/openshift-install.pre && sudo touch /var/opt/.openshift-complete-pre
   args:
     chdir: "{{ default_home }}"
     creates: /var/opt/.openshift-complete-pre
@@ -102,14 +102,14 @@
   register: ose_install_status_pre
 
 - name: 'Check on OpenShift install ...'
-  async_status: jid={{ ose_install_status_pre.ansible_job_id }}
+  ansible.builtin.async_status: jid={{ ose_install_status_pre.ansible_job_id }}
   register: job_result
   until: job_result.finished
   delay: 30
   retries: 180
 
 - name: Run advanced installation method 
-  shell: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory_ose /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml 2>&1 | sudo tee -a /var/log/openshift-install && sudo touch /var/opt/.openshift-complete-deploy
+  ansible.builtin.shell: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory_ose /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml 2>&1 | sudo tee -a /var/log/openshift-install && sudo touch /var/opt/.openshift-complete-deploy
   args:
     chdir: "{{ default_home }}"
     creates: /var/opt/.openshift-complete-deploy
@@ -118,7 +118,7 @@
   register: ose_install_status
 
 - name: 'Check on OpenShift install ...'
-  async_status: jid={{ ose_install_status.ansible_job_id }}
+  ansible.builtin.async_status: jid={{ ose_install_status.ansible_job_id }}
   register: job_result
   until: job_result.finished
   delay: 30

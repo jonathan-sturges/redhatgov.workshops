@@ -7,7 +7,7 @@
   - { role: aws.create, tags: ["create"] }
   tasks:
   - name: explain how to login
-    debug:
+    ansible.builtin.debug:
       msg: "Please run 'ansible-playbook 2_preload.yml' to load the admin server."
 
 - name: Issue SSL certs

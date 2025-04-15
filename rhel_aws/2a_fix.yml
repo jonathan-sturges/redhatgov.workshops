@@ -21,7 +21,7 @@
 
   tasks:
   - name: install pcp and cockpit-pcp (RHEL 8)
-    yum:
+    ansible.builtin.yum:
       name:
       - pcp
       - cockpit-pcp
@@ -39,7 +39,7 @@
       - cockpit-pcp
 
   - name: install bash-completion (RHEL 8)
-    yum:
+    ansible.builtin.yum:
       name:
       - bash-completion
       state: present

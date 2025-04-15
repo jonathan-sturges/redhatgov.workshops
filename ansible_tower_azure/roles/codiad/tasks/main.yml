@@ -1,5 +1,5 @@
 # file: roles/subscription_manager/tasks/main.yml
 ---
 # Codiad Installation
-- import_tasks: codiad.yml
+- ansible.builtin.import_tasks: codiad.yml
   when: install_codiad

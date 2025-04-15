@@ -8,7 +8,7 @@
     api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
 
 - name: Create role template for pod-manager for containergroup(s) 
-  template:
+  ansible.builtin.template:
     src: "{{ role_path }}/templates/tower-cg-pod-manager.yml.j2"
     dest: "{{ openshift_build_path }}/tower-cg-pod-manager-{{ item }}.yml"
 
@@ -19,7 +19,7 @@
     api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
 
 - name: Create rolebinding template for pod-manager for containergroup(s) 
-  template:
+  ansible.builtin.template:
     src: "{{ role_path }}/templates/tower-cg-rolebinding.yml.j2"
     dest: "{{ openshift_build_path }}/tower-cg-rolebinding-{{ item }}.yml"
 
@@ -39,14 +39,14 @@
   register: cgsa
 
 - name: Capture token from container from account information
-  set_fact:
+  ansible.builtin.set_fact:
     token: "{{ secret.name }}"
   when: '"token" in secret.name'
   loop:  "{{ cgsa.resources[0].secrets }}"
   loop_control:
     loop_var: secret
 
-- debug:
+- ansible.builtin.debug:
     msg: "{{ token }}"
 
 - name: Retrieve containergroup secret
@@ -58,7 +58,7 @@
     api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
   register: cgsecret
 
-- debug:
+- ansible.builtin.debug:
     msg: "{{ cgsecret.resources[0].data.token }}"
 
 - name: Add OpenShift credential for containergroup

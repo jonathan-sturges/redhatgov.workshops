@@ -1,9 +1,9 @@
 ---
-- debug:
+- ansible.builtin.debug:
     msg: "Unsubscribing IP {{ public_ip }}}"
 
 - name: Unsubscribe VM
-  redhat_subscription:
+  community.general.redhat_subscription:
     state: absent
   delegate_to: "{{ public_ip }}"
   remote_user: "{{ remote_user_name }}"

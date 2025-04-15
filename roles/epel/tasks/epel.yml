@@ -4,14 +4,14 @@
   block:
 
   - name: get EPEL release key
-    get_url:
+    ansible.builtin.get_url:
       url: "{{ epel_key_6 }}"
       dest: "/tmp/epel.key"
       mode: '0644'
 
   - name: Import keys
 #   shell: rpmkeys --import "/tmp/epel.key"
-    rpm_key:
+    ansible.builtin.rpm_key:
       state: present
       key: "{{ item }}"
     with_items:
@@ -26,14 +26,14 @@
   block:
 
   - name: get EPEL release key
-    get_url:
+    ansible.builtin.get_url:
       url: "{{ epel_key_7 }}"
       dest: "/tmp/epel.key"
       mode: '0644'
 
   - name: Import keys
 #   shell: rpmkeys --import "/tmp/epel.key"
-    rpm_key:
+    ansible.builtin.rpm_key:
       state: present
       key: "{{ item }}"
     with_items:
@@ -48,14 +48,14 @@
   block:
 
   - name: get EPEL 8 release key
-    get_url:
+    ansible.builtin.get_url:
       url: "{{ epel_key_8 }}"
       dest: "/tmp/epel.key"
       mode: '0644'
 
   - name: Import keys
 #   shell: rpmkeys --import "/tmp/epel.key"
-    rpm_key:
+    ansible.builtin.rpm_key:
       state: present
       key: "{{ item }}"
     with_items:
